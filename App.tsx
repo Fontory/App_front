@@ -11,6 +11,7 @@ import RegisterScreen from './screens/Login/RegisterScreen';
 import SetPasswordScreen from './screens/Login/SetPasswordScreen';
 import ResetPasswordScreen from './screens/Login/ResetPasswordScreen';
 import PrivacyScreen from './screens/Login/PrivacyScreen';
+import BoardScreen from './screens/Board/BoardScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -19,6 +20,7 @@ export type RootStackParamList = {
   SetPassword: undefined;
   ResetPassword: undefined;
   Privacy: undefined;
+  Board: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,7 @@ const App = () => (
       <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
+      <Stack.Screen name="Board" component={BoardScreen} />
     </Stack.Navigator>
   </NavigationContainer>
 );

@@ -78,9 +78,13 @@ const ResetPasswordScreen = ({ navigation }) => {
 
       {/* Bottom Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={() => {/* TODO: handle submit */}}>
-          <Text style={styles.buttonText}>Create New Password</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Login')}
+      >
+        <Text style={styles.buttonText}>Create New Password</Text>
+      </TouchableOpacity>
+
       </View>
     </Container>
   );
