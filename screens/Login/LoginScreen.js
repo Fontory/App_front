@@ -1,16 +1,18 @@
+// screens/Login/LoginScreen.js
 import React, { useState } from 'react';
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+
+import Container from '../Container';
 
 const LoginScreen = ({ navigation }) => {
   const [id, setId] = useState('');
@@ -18,16 +20,7 @@ const LoginScreen = ({ navigation }) => {
   const [secureText, setSecureText] = useState(true);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* 상단 고정: 뒤로가기 + 제목 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="chevron-left" size={28} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Log In</Text>
-      </View>
-
-      {/* 입력 영역 */}
+    <Container title="Log In">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
@@ -76,7 +69,6 @@ const LoginScreen = ({ navigation }) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* 하단 고정 버튼 */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.loginButton}>
           <Text style={styles.loginText}>Log In</Text>
@@ -86,56 +78,22 @@ const LoginScreen = ({ navigation }) => {
           Don’t have an account?
           <Text
             style={styles.signUpLink}
-            onPress={() => navigation.navigate('Register')}>
+            onPress={() => navigation.navigate('Register')}
+          >
             {' '}Sign Up
           </Text>
         </Text>
       </View>
-    </SafeAreaView>
+    </Container>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  flex: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-  },
-  backButton: {
-    marginRight: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  content: {
-    paddingHorizontal: 20,
-  },
-  welcome: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-  },
-  subText: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 30,
-  },
-  input: {
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 20,
-  },
+  flex: { flex: 1 },
+  content: { paddingHorizontal: 20 },
+  welcome: { fontSize: 18, fontWeight: 'bold', marginTop: 10 },
+  subText: { fontSize: 13, color: '#666', marginBottom: 30 },
+  input: { backgroundColor: '#eee', borderRadius: 8, padding: 14, marginBottom: 20 },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,13 +102,9 @@ const styles = StyleSheet.create({
     paddingRight: 14,
     marginBottom: 10,
   },
-  eyeIcon: {
-    marginLeft: 10,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
+  eyeIcon: { marginLeft: 10 },
+  linkText: { color: '#000', fontSize: 12 },
+  footer: { paddingHorizontal: 20, paddingBottom: 30 },
   loginButton: {
     backgroundColor: '#000',
     borderRadius: 30,
@@ -159,22 +113,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     width: '100%',
   },
-  loginText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  linkText: {
-    color: '#000',
-    fontSize: 12,
-  },
-  signupText: {
-    fontSize: 12,
-    alignSelf: 'center',
-  },
-  signUpLink: {
-    color: 'blue',
-  },
+  loginText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  signupText: { fontSize: 12, alignSelf: 'center' },
+  signUpLink: { color: 'blue' },
 });
 
 export default LoginScreen;
