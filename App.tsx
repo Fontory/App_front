@@ -4,29 +4,39 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-// screen 컴포넌트 import
+// screens import
 import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/Login/LoginScreen';
+import RegisterScreen from './screens/Login/RegisterScreen';
+import SetPasswordScreen from './screens/Login/SetPasswordScreen';
+import ResetPasswordScreen from './screens/Login/ResetPasswordScreen';
+import PrivacyScreen from './screens/Login/PrivacyScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
+  Register: undefined;
+  SetPassword: undefined;
+  ResetPassword: undefined;
+  Privacy: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const App = () => {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Welcome"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-};
+const App = () => (
+  <NavigationContainer>
+    <Stack.Navigator
+      initialRouteName="Welcome"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="Privacy" component={PrivacyScreen} />
+    </Stack.Navigator>
+  </NavigationContainer>
+);
 
 export default App;
