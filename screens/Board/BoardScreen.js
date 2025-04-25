@@ -21,7 +21,7 @@ const BoardScreen = ({ navigation }) => {
             “존재하는 것을 변화시키는 것은 성숙하게 만드는 것이다.”
           </Text>
           <Text style={styles.quoteAuthor}>헨리 버그슨</Text>
-          <TouchableOpacity style={styles.moreButton}>
+          <TouchableOpacity style={styles.moreButton} onPress={() => navigation.navigate('QuoteDetail')}>
             <Text style={styles.moreText}>더보기</Text>
           </TouchableOpacity>
         </View>
