@@ -55,7 +55,7 @@ const Container = ({
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => navigation.navigate('Home')}
+            onPress={() => navigation.navigate('Board')}
           >
             <Icon name="home" size={ICON_SIZE} color="#fff" />
           </TouchableOpacity>
