@@ -13,6 +13,7 @@ import ResetPasswordScreen from './screens/Login/ResetPasswordScreen';
 import PrivacyScreen from './screens/Login/PrivacyScreen';
 import BoardScreen from './screens/Board/BoardScreen';
 import QuoteDetailScreen from './screens/Board/QuoteDetailScreen';
+import QuoteNotebookScreen from './screens/Board/QuoteNotebookScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   Privacy: undefined;
   Board: undefined;
   QuoteDetail: undefined;
+  QuoteNotebook: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -41,6 +43,7 @@ const App = () => (
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="Board" component={BoardScreen} />
       <Stack.Screen name="QuoteDetail" component={QuoteDetailScreen} />
+      <Stack.Screen name="QuoteNotebook" component={QuoteNotebookScreen} />
     </Stack.Navigator>
   </NavigationContainer>
 );

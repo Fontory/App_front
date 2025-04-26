@@ -60,7 +60,7 @@ const SetPasswordScreen = ({ navigation }) => {
 
           {sent && (
             <TextInput
-              style={[styles.input, { marginTop: 20 }]}
+              style={[styles.input, { marginTop: 10 }]}
               placeholder="Verification Code"
               placeholderTextColor="#666"
               value={code}
