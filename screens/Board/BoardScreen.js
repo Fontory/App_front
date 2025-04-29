@@ -20,7 +20,7 @@ const DUMMY_POSTS = [
 const BoardScreen = ({ navigation }) => (
   <Container
     title="Board"
-    hideBackButton={true}
+    hideBackButton={false}
     showBottomBar={true}
   >
     <ScrollView contentContainerStyle={styles.wrapper}>
