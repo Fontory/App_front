@@ -1,4 +1,3 @@
-// screens/Board/QuoteNotebookScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -6,13 +5,14 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  LayoutAnimation,
+  Platform,
+  UIManager,
   Dimensions,
- LayoutAnimation,
- Platform,
- UIManager,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Container from '../Container';
+import { useRoute } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const ACTIVE_WIDTH = width * 0.6;
@@ -25,25 +25,37 @@ const IMAGES = [
 ];
 
 const QuoteNotebookScreen = ({ navigation }) => {
+  // Android에서 LayoutAnimation 활성화
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  const route = useRoute();
+  const { previewText, fontSize, fontFamily } = route.params;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const len = IMAGES.length;
   const prevIndex = (currentIndex + len - 1) % len;
   const nextIndex = (currentIndex + 1) % len;
 
- // Android 에서 LayoutAnimation 사용 허용
- useEffect(() => {
-   if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-     UIManager.setLayoutAnimationEnabledExperimental(true);
-   }
- }, []);
-
   const goPrev = () => {
-+   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setCurrentIndex(prevIndex);
   };
   const goNext = () => {
-+   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setCurrentIndex(nextIndex);
+  };
+
+  const handleComplete = () => {
+    navigation.navigate('QuoteComplete', {
+      previewText,
+      fontSize,
+      fontFamily,
+      selectedImage: IMAGES[currentIndex],
+    });
   };
 
   return (
@@ -86,7 +98,7 @@ const QuoteNotebookScreen = ({ navigation }) => {
 
       <TouchableOpacity
         style={styles.nextButton}
-        onPress={() => navigation.navigate('Board')}
+        onPress={handleComplete}
       >
         <Text style={styles.nextText}>다음</Text>
       </TouchableOpacity>

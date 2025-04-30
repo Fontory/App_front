@@ -38,6 +38,9 @@ git push -u origin main
 | `react-native-safe-area-context`      | ^5.4.0    |
 | `react-native-screens`                | ^4.10.0   |
 | `react-native-vector-icons`           | ^10.2.0   |
+| `react-native-view-shot`              | 4.0.3     |
+| `react-native-fs`                     | 2.20.0    |
+| `react-native-image-picker`           | ------    |
 
 ### DevDependencies
 

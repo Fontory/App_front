@@ -72,7 +72,7 @@ const BoardScreen = ({ navigation }) => (
     {/* Floating Write Button */}
     <TouchableOpacity
       style={styles.floatingButton}
-      onPress={() => navigation.navigate('Write')}
+      onPress={() => navigation.navigate('BoardPost')}
     >
       <Icon name="edit-2" size={24} color="#fff" />
     </TouchableOpacity>
