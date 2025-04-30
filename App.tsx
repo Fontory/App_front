@@ -18,6 +18,15 @@ import QuoteCompleteScreen from './screens/Board/QuoteCompleteScreen';
 import BoardPostScreen from './screens/Board/BoardPostScreen';
 import BoardDetailScreen from './screens/Board/BoardDetailScreen';
 import OtherProfileScreen from './screens/Board/OtherProfileScreen';
+import MyPageScreen from './screens/Mypage/MyPageScreen';
+import MyProfileScreen from './screens/Mypage/MyProfileScreen';
+import LevelInfoScreen from './screens/Mypage/LevelInfoScreen';
+import MyFontScreen from './screens/Mypage/MyFontScreen';
+import BoardEditScreen from './screens/Mypage/BoardEditScreen';
+import SaveFontScreen from './screens/Mypage/SaveFontScreen';
+import LikeFontScreen from './screens/Mypage/LikeFontScreen';
+import MyBoardScreen from './screens/Mypage/MyBoardScreen';
+import MyNoteBookScreen from './screens/Mypage/MyNoteBookScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -33,6 +42,15 @@ export type RootStackParamList = {
   BoardPost: undefined;
   BoardDetail: undefined;
   OtherProfile: undefined;
+  MyPage: undefined;
+  MyProfile: undefined;
+  LevelInfo: undefined;
+  MyFont: undefined;
+  BoardEdit: undefined;
+  SaveFont: undefined;
+  LikeFont: undefined;
+  MyBoard: undefined;
+  MyNoteBook: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -56,6 +74,15 @@ const App = () => (
       <Stack.Screen name="BoardPost" component={BoardPostScreen} />
       <Stack.Screen name="BoardDetail" component={BoardDetailScreen} />
       <Stack.Screen name="OtherProfile" component={OtherProfileScreen} />
+      <Stack.Screen name="MyPage" component={MyPageScreen} />
+      <Stack.Screen name="MyProfile" component={MyProfileScreen} />
+      <Stack.Screen name="LevelInfo" component={LevelInfoScreen} />
+      <Stack.Screen name="MyFont" component={MyFontScreen} />
+      <Stack.Screen name="BoardEdit" component={BoardEditScreen} />
+      <Stack.Screen name="SaveFont" component={SaveFontScreen} />
+      <Stack.Screen name="LikeFont" component={LikeFontScreen} />
+      <Stack.Screen name="MyBoard" component={MyBoardScreen} />
+      <Stack.Screen name="MyNoteBook" component={MyNoteBookScreen} />
     </Stack.Navigator>
   </NavigationContainer>
 );

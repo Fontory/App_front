@@ -55,25 +55,25 @@ const Container = ({
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => navigation.navigate('Board')}
+            onPress={() => navigation.navigate('Home')}
           >
             <Icon name="home" size={ICON_SIZE} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => navigation.navigate('Board')}
+            onPress={() => navigation.navigate('FontList')}
           >
             <Icon name="list" size={ICON_SIZE} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => navigation.navigate('Fontlist')}
+            onPress={() => navigation.navigate('Board')}
           >
             <Icon name="grid" size={ICON_SIZE} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.tabItem}
-            onPress={() => navigation.navigate('Mypage')}
+            onPress={() => navigation.navigate('MyPage')}
           >
             <Icon name="user" size={ICON_SIZE} color="#fff" />
           </TouchableOpacity>
