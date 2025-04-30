@@ -16,6 +16,8 @@ import QuoteDetailScreen from './screens/Board/QuoteDetailScreen';
 import QuoteNotebookScreen from './screens/Board/QuoteNotebookScreen';
 import QuoteCompleteScreen from './screens/Board/QuoteCompleteScreen';
 import BoardPostScreen from './screens/Board/BoardPostScreen';
+import BoardDetailScreen from './screens/Board/BoardDetailScreen';
+import OtherProfileScreen from './screens/Board/OtherProfileScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -29,6 +31,8 @@ export type RootStackParamList = {
   QuoteNotebook: undefined;
   QuoteComplete: undefined;
   BoardPost: undefined;
+  BoardDetail: undefined;
+  OtherProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -50,6 +54,8 @@ const App = () => (
       <Stack.Screen name="QuoteNotebook" component={QuoteNotebookScreen} />
       <Stack.Screen name="QuoteComplete" component={QuoteCompleteScreen} />
       <Stack.Screen name="BoardPost" component={BoardPostScreen} />
+      <Stack.Screen name="BoardDetail" component={BoardDetailScreen} />
+      <Stack.Screen name="OtherProfile" component={OtherProfileScreen} />
     </Stack.Navigator>
   </NavigationContainer>
 );
