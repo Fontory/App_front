@@ -36,7 +36,9 @@ const FontDetailScreen = ({ route, navigation }) => {
   };
 
   return (
-    <Container showBottomBar={false} hideBackButton={false}>
+
+    <Container title="폰트 상세페이지" showBottomBar={true} hideBackButton={false}>
+
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>{font.name}</Text>
 

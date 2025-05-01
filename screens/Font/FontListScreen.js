@@ -53,7 +53,11 @@ const FontListScreen = () => {
   };
 
   return (
+<<<<<<< HEAD
     <Container showBottomBar={true}>
+=======
+    <Container title="Font List" hideBackButton={true} showBottomBar={true}>
+>>>>>>> 785f332 (Initial commit)
       <View style={styles.topBar}>
         <View style={styles.sortToggle}>
           <TouchableOpacity style={[styles.sortButton, styles.sortSelected]}>
@@ -70,7 +74,11 @@ const FontListScreen = () => {
           value={searchText}
           onChangeText={setSearchText}
         />
+<<<<<<< HEAD
         <TouchableOpacity style={styles.uploadButton}>
+=======
+        <TouchableOpacity style={styles.uploadButton} onPress={() => navigation.navigate('MyFont')}>
+>>>>>>> 785f332 (Initial commit)
           <Text style={styles.uploadText}>+ 내 폰트 등록</Text>
         </TouchableOpacity>
       </View>

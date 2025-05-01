@@ -25,7 +25,7 @@ const FontGenerationScreen = ({ navigation, route }) => {
   };
 
   return (
-    <Container showBottomBar={false} hideBackButton={false}>
+    <Container title="폰트 생성" showBottomBar={true} hideBackButton={false}>
       <View style={styles.inner}>
         <Text style={styles.title}>폰트 생성 완료!</Text>
 

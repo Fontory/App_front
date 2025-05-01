@@ -2,11 +2,29 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 
 # FontoryApp
 
+<<<<<<< HEAD
 손글씨 기반 폰트 생성 및 적용을 실험해 보는 React Native 앱입니다.
+=======
+손글씨 기반 폰트 생성 및 적용을 실험해 보는 React Native 앱입니다.  
+이 프로젝트는 [`@react-native-community/cli`](https://github.com/react-native-community/cli)를 통해 부트스트랩되었습니다.
+
+---
+>>>>>>> 785f332 (Initial commit)
 
 ## Build with android studio 
 
 ```sh
+<<<<<<< HEAD
+=======
+# 프로젝트 루트에서 의존성 설치
+npm install
+
+# React Native 명령어(예: npx react-native run-android)를 위해 필요합니다
+npm install --save-dev @react-native-community/cli
+```
+
+```sh
+>>>>>>> 785f332 (Initial commit)
 # Metro 번들러 서버 실행 
 npx react-native start --reset-cache
 
@@ -14,11 +32,19 @@ npx react-native start --reset-cache
 npx react-native run-android
 ```
 
+<<<<<<< HEAD
 ## Github push
 
 ```sh
 git add .
 git commit -m " .. "
+=======
+## Git Workflow
+
+```sh
+git add .
+git commit -m "설명 메시지"
+>>>>>>> 785f332 (Initial commit)
 git branch -M main
 git push -u origin main
 ```
@@ -40,7 +66,11 @@ git push -u origin main
 | `react-native-vector-icons`           | ^10.2.0   |
 | `react-native-view-shot`              | 4.0.3     |
 | `react-native-fs`                     | 2.20.0    |
+<<<<<<< HEAD
 | `react-native-image-picker`           | ------    |
+=======
+| `react-native-image-picker`           | 8.2.0     |
+>>>>>>> 785f332 (Initial commit)
 
 ### DevDependencies
 
@@ -65,9 +95,13 @@ git push -u origin main
 | `react-test-renderer`                                | 19.0.0      |
 | `typescript`                                         | 5.0.4       |
 
+<<<<<<< HEAD
 ---
 
 ```sh
 # 프로젝트 루트에서 의존성 설치
 npm install
 ```
+=======
+---
+>>>>>>> 785f332 (Initial commit)
