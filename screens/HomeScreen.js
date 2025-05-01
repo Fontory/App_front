@@ -17,7 +17,7 @@ const HomeScreen = () => {
 
   const handleCamera = () => {
     launchCamera(
-      {
+      {  
         mediaType: 'photo',
         saveToPhotos: true,
       },

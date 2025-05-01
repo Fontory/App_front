@@ -33,7 +33,7 @@ const BoardPostScreen = ({ navigation }) => {
   };
 
   const handleUpload = () => {
-    // 1) 서버에 업로드 처리 로직 수행 (API 호출 등)
+    // 1) 서버에 업로드 처리 로직 수행
     console.log({ photo, postType, body, font });
     navigation.navigate('BoardDetail');
   };
