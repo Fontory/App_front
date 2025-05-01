@@ -27,6 +27,14 @@ import SaveFontScreen from './screens/Mypage/SaveFontScreen';
 import LikeFontScreen from './screens/Mypage/LikeFontScreen';
 import MyBoardScreen from './screens/Mypage/MyBoardScreen';
 import MyNoteBookScreen from './screens/Mypage/MyNoteBookScreen';
+import HomeScreen from './screens/HomeScreen';
+import FontGenerationScreen from './screens/Font/FontGenerationScreen';
+import FontDownloadScreen from './screens/Font/FontDownloadScreen';
+import FontListScreen from './screens/Font/FontListScreen';
+import FontDetailScreen from './screens/Font/FontDetailScreen';
+import ExerciseBookScreen from './screens/ExerciseBook/ExerciseBookScreen';
+import ExerciseBook2Screen from './screens/ExerciseBook/ExerciseBook2Screen';
+import ExerciseBook3Screen from './screens/ExerciseBook/ExerciseBook3Screen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -51,6 +59,22 @@ export type RootStackParamList = {
   LikeFont: undefined;
   MyBoard: undefined;
   MyNoteBook: undefined;
+  Home: undefined;
+  FontGeneration: { imageUri: string };
+  FontDownload: { fontName: string };
+  FontList: undefined;
+  FontDetail: { font: any };
+  ExerciseBook: { fontName: string };
+  ExerciseBook2: {
+    background: { id: string; name: string; image: any };
+    fontName: string;
+    quote: string;
+  };
+  ExerciseBook3: {
+    background: { id: string; name: string; image: any };
+    fontName: string;
+    quote: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -83,6 +107,14 @@ const App = () => (
       <Stack.Screen name="LikeFont" component={LikeFontScreen} />
       <Stack.Screen name="MyBoard" component={MyBoardScreen} />
       <Stack.Screen name="MyNoteBook" component={MyNoteBookScreen} />
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="FontGeneration" component={FontGenerationScreen} />
+      <Stack.Screen name="FontDownload" component={FontDownloadScreen} />
+      <Stack.Screen name="FontList" component={FontListScreen} />
+      <Stack.Screen name="FontDetail" component={FontDetailScreen} />
+      <Stack.Screen name="ExerciseBook" component={ExerciseBookScreen} />
+      <Stack.Screen name="ExerciseBook2" component={ExerciseBook2Screen} />
+      <Stack.Screen name="ExerciseBook3" component={ExerciseBook3Screen} />
     </Stack.Navigator>
   </NavigationContainer>
 );

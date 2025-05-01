@@ -31,26 +31,28 @@ const Container = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: STATUS_BAR_PADDING }]}>
-        {!hideBackButton && (
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Icon name="chevron-left" size={ICON_SIZE} />
-          </TouchableOpacity>
-        )}
-        <Text style={styles.headerTitle}>{title}</Text>
-      </View>
+      {/* ✅ title이 있을 때만 header 영역 렌더링 */}
+      {title && (
+        <View style={[styles.header, { paddingTop: STATUS_BAR_PADDING }]}>
+          {!hideBackButton && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Icon name="chevron-left" size={ICON_SIZE} />
+            </TouchableOpacity>
+          )}
+          <Text style={styles.headerTitle}>{title}</Text>
+        </View>
+      )}
 
-      {/* Content */}
+      {/* 콘텐츠 영역 */}
       <View style={styles.content}>{children}</View>
 
-      {/* Bottom spacer */}
+      {/* 하단 여백 (탭바가 위로 뜨기 때문에 공간 확보용) */}
       {showBottomBar && <View style={{ height: BOTTOM_BAR_HEIGHT + BOTTOM_BAR_MARGIN }} />}
 
-      {/* Bottom Tab Bar */}
+      {/* 하단 탭바 */}
       {showBottomBar && (
         <View style={styles.tabBar}>
           <TouchableOpacity
@@ -84,29 +86,34 @@ const Container = ({
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   header: {
     height: STATUS_BAR_PADDING + HEADER_HEIGHT,
     flexDirection: 'row',
-    alignItems: 'center',        // 수직 중앙 정렬
-    justifyContent: 'center',   // 타이틀 중앙 정렬
+    alignItems: 'center',
+    justifyContent: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#ccc',
     paddingHorizontal: SIDE_MARGIN,
   },
   backButton: {
     position: 'absolute',
-    left: SIDE_MARGIN,           // 타이틀과 같은 수평 선
+    left: SIDE_MARGIN,
     top: STATUS_BAR_PADDING + (HEADER_HEIGHT - ICON_SIZE) / 2,
   },
   headerTitle: {
     fontSize: 23,
     fontWeight: 'bold',
   },
-  content: { flex: 1 },
+  content: {
+    flex: 1,
+  },
   tabBar: {
     position: 'absolute',
-    bottom: BOTTOM_BAR_MARGIN,   // 바텀에서 띄워진 위치
+    bottom: BOTTOM_BAR_MARGIN,
     left: SIDE_MARGIN,
     right: SIDE_MARGIN,
     height: BOTTOM_BAR_HEIGHT,
@@ -116,8 +123,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'space-around',
     alignItems: 'center',
-    elevation: 5,                // 안드로이드 그림자
-    shadowColor: '#000',         // iOS 그림자
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
