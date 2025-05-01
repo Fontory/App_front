@@ -54,15 +54,7 @@ const FontDownloadScreen = ({ route, navigation }) => {
   };
 
   return (
-<<<<<<< HEAD
-<<<<<<< HEAD
-    <Container showBottomBar={false} hideBackButton={false}>
-=======
     <Container title="폰트 다운로드" showBottomBar={true} hideBackButton={false}>
->>>>>>> 785f332 (Initial commit)
-=======
-    <Container title="폰트 다운로드" showBottomBar={true} hideBackButton={false}>
->>>>>>> dab201d (Initial commit)
       <View style={styles.container}>
         <Text style={styles.title}>폰트 생성 완료!</Text>
         <Text style={styles.fontName}>{fontName}.ttf</Text>
