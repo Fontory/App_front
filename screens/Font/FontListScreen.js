@@ -1,5 +1,5 @@
 // screens/Font/FontListScreen.js
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,41 +8,47 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import Container from '../Container';
 import { useNavigation } from '@react-navigation/native';
 
-const sampleFonts = [
-  {
-    id: '1',
-    name: '강부장님체',
-    nickname: '강부장',
-    profile: require('../../assets/sampleprofile.png'),
-    description: '오랫동안 사무실에서 일해 온 강부장의 손글씨입니다.',
-  },
-  {
-    id: '2',
-    name: '하루체',
-    nickname: '하루',
-    profile: require('../../assets/sampleprofile.png'),
-    description: '매일 일기를 쓰는 하루의 글씨예요.',
-  },
-  {
-    id: '3',
-    name: '윤지체',
-    nickname: '윤지',
-    profile: require('../../assets/sampleprofile.png'),
-    description: '붓펜으로 쓰는 걸 좋아하는 윤지의 손글씨입니다.',
-  },
-];
-
 const FontListScreen = () => {
   const navigation = useNavigation();
+  const [fontList, setFontList] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [likes, setLikes] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [sortType, setSortType] = useState('popular'); // ⭐ 정렬 상태 추가
 
-  const filteredFonts = sampleFonts.filter(font =>
-    font.name.includes(searchText),
+  // ✅ 폰트 목록 요청
+  const fetchFonts = async () => {
+    try {
+      const response = await fetch('http://ceprj.gachon.ac.kr:60023/fonts');
+      const data = await response.json();
+      setFontList(data);
+    } catch (err) {
+      console.error('폰트 데이터를 불러오지 못했습니다:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFonts();
+  }, []);
+
+  // ✅ 정렬 적용
+  const sortedFonts = [...fontList].sort((a, b) => {
+    if (sortType === 'popular') {
+      return b.likeCount - a.likeCount;
+    } else {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+  });
+
+  const filteredFonts = sortedFonts.filter(font =>
+    font.name?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const handleLikeToggle = (id) => {
@@ -52,15 +58,64 @@ const FontListScreen = () => {
     }));
   };
 
+  const renderFontCard = ({ item }) => (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('FontDetail', { font: item })}
+    >
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Image
+            source={
+              item.originalImageUrl
+                ? { uri: item.originalImageUrl }
+                : require('../../assets/sampleprofile.png')
+            }
+            style={styles.avatar}
+          />
+          <View style={styles.headerText}>
+            <Text style={styles.fontName}>{item.name}</Text>
+            <Text style={styles.nickname}>@{item.userId}</Text>
+          </View>
+          <TouchableOpacity style={styles.arrow}>
+            <Text style={{ fontSize: 20, color: '#666' }}>{'>'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.description}>{item.description}</Text>
+
+        <TouchableOpacity
+          style={styles.heart}
+          onPress={() => handleLikeToggle(item.fontId)}
+        >
+          <Text
+            style={{
+              color: likes[item.fontId] ? 'red' : '#aaa',
+              fontSize: 18,
+            }}
+          >
+            {likes[item.fontId] ? '♥' : '♡'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <Container title="Font List" hideBackButton={true} showBottomBar={true}>
       <View style={styles.topBar}>
         <View style={styles.sortToggle}>
-          <TouchableOpacity style={[styles.sortButton, styles.sortSelected]}>
-            <Text style={styles.sortTextSelected}>인기순</Text>
+          <TouchableOpacity
+            style={[styles.sortButton, sortType === 'popular' && styles.sortSelected]}
+            onPress={() => setSortType('popular')}
+          >
+            <Text style={sortType === 'popular' ? styles.sortTextSelected : styles.sortText}>인기순</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.sortButton}>
-            <Text style={styles.sortText}>최신순</Text>
+          <TouchableOpacity
+            style={[styles.sortButton, sortType === 'latest' && styles.sortSelected]}
+            onPress={() => setSortType('latest')}
+          >
+            <Text style={sortType === 'latest' ? styles.sortTextSelected : styles.sortText}>최신순</Text>
           </TouchableOpacity>
         </View>
 
@@ -75,46 +130,16 @@ const FontListScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={filteredFonts}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('FontDetail', { font: item })}
-          >
-            <View style={styles.card}>
-              <View style={styles.header}>
-                <Image source={item.profile} style={styles.avatar} />
-                <View style={styles.headerText}>
-                  <Text style={styles.fontName}>{item.name}</Text>
-                  <Text style={styles.nickname}>@{item.nickname}</Text>
-                </View>
-                <TouchableOpacity style={styles.arrow}>
-                  <Text style={{ fontSize: 20, color: '#666' }}>{'>'}</Text>
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.description}>{item.description}</Text>
-
-              <TouchableOpacity
-                style={styles.heart}
-                onPress={() => handleLikeToggle(item.id)}
-              >
-                <Text
-                  style={{
-                    color: likes[item.id] ? 'red' : '#aaa',
-                    fontSize: 18,
-                  }}
-                >
-                  {likes[item.id] ? '♥' : '♡'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#000" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filteredFonts}
+          keyExtractor={item => item.fontId.toString()}
+          contentContainerStyle={styles.listContainer}
+          renderItem={renderFontCard}
+        />
+      )}
     </Container>
   );
 };
