@@ -9,201 +9,98 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   View,
-  Alert,
-  Platform
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+
 import Container from '../Container';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import defaultProfile from '../../assets/profile.png';
-import RNFS from 'react-native-fs';
 
 const RegisterScreen = ({ navigation }) => {
   const [checked, setChecked] = useState(false);
-  const [profileImageUri, setProfileImageUri] = useState(null);
-  const [profileImageData, setProfileImageData] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
   const [secureText, setSecureText] = useState(true);
-  const [form, setForm] = useState({
-    name: '',
-    id: '',
-    password: '',
-    nickname: '',
-    email: '',
-    mobile: '',
-  });
-
-  // 백엔드 API 포트는 60023입니다
-  const BASE_URL = Platform.OS === 'android'
-    ? 'http://ceprj.gachon.ac.kr:60023'
-    : 'http://ceprj.gachon.ac.kr:60023';
-
-  const handleChoosePhoto = () => {
-    launchImageLibrary({ mediaType: 'photo' }, response => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        console.error('ImagePicker Error:', response.errorMessage);
-        return;
-      }
-      const asset = response.assets[0];
-      setProfileImageUri(asset.uri);
-      setProfileImageData(asset);
-    });
-  };
-
-  const handleTakePhoto = () => {
-    launchCamera({ mediaType: 'photo' }, response => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        console.error('Camera Error:', response.errorMessage);
-        return;
-      }
-      const asset = response.assets[0];
-      setProfileImageUri(asset.uri);
-      setProfileImageData(asset);
-    });
-  };
-
-  const handleSignUp = async () => {
-    if (!checked) {
-      Alert.alert('약관에 동의해주세요.');
-      return;
-    }
-    
-    let imageUrl = '';
-
-    // 1. 이미지 업로드
-    if (profileImageData) {
-      const formData = new FormData();
-      formData.append('image', {
-        uri: Platform.OS === 'ios'
-          ? profileImageData.uri.replace('file://', '')
-          : profileImageData.uri,
-        type: profileImageData.type || 'image/jpeg',
-        name: profileImageData.fileName || 'profile.jpg',
-      });
-
-      try {
-        const uploadRes = await fetch(`${BASE_URL}/users/profile-image`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'multipart/form-data' },
-          body: formData,
-        });
-
-        const uploadJson = await uploadRes.json();
-        if (!uploadRes.ok || !uploadJson.imageUrl) {
-          throw new Error(uploadJson.message || '이미지 업로드 실패');
-        }
-
-        imageUrl = uploadJson.imageUrl;
-      } catch (err) {
-        console.error('이미지 업로드 에러:', err);
-        return Alert.alert('이미지 업로드에 실패했습니다.');
-      }
-    }
-
-    // 2. 회원가입 요청
-    const payload = {
-      userId: form.id,
-      password: form.password,
-      passwordConfirm: form.password,
-      name: form.name,
-      phone: form.mobile,
-      email: form.email,
-      nickname: form.nickname,
-      profileImage: imageUrl,
-    };
-
-    try {
-      const res = await fetch(`${BASE_URL}/users/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const json = await res.json();
-      if (!res.ok || json.status !== 0) throw new Error(json.message || '회원가입 실패');
-
-      Alert.alert('회원가입 성공!');
-      navigation.replace('Login');
-    } catch (err) {
-      console.error('회원가입 에러', err);
-      Alert.alert(err.message || '네트워크 요청에 실패했습니다.');
-    }
-  };
+  const [form, setForm] = useState({ name: '', id: '', password: '', nickname: '', email: '', mobile: '' });
 
   return (
     <Container title="New Account">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {/* 프로필 이미지 + 이름 */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flex}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Profile Image + Full Name (이미지 선택 기능은 제외) */}
           <View style={styles.profileRow}>
-            <TouchableOpacity
-              style={styles.profileImageWrapper}
-              onPress={() =>
-                Alert.alert('프로필 사진 선택', '', [
-                  { text: '카메라', onPress: handleTakePhoto },
-                  { text: '갤러리', onPress: handleChoosePhoto },
-                  { text: '취소', style: 'cancel' },
-                ])
-              }
-            >
-              <Image
-                source={
-                  profileImageUri ? { uri: profileImageUri } : defaultProfile
-                }
-                style={styles.profileImage}
-              />
+            <TouchableOpacity style={styles.profileImageWrapper} onPress={() => { /* 이미지 선택 제거 */ }}>
+              {profileImage ? (
+                <Image source={{ uri: profileImage }} style={styles.profileImage} />
+              ) : (
+                <Icon name="user" size={40} color="#aaa" />
+              )}
             </TouchableOpacity>
+
             <TextInput
               style={styles.fullNameInput}
               placeholder="Full Name"
               placeholderTextColor="#666"
               value={form.name}
-              onChangeText={text => setForm({ ...form, name: text })}
-              autoCapitalize="words"
+              onChangeText={(text) => setForm({ ...form, name: text })}
             />
           </View>
 
-          {/* ID */}
+          {/* ID 입력 */}
           <TextInput
             style={styles.input}
             placeholder="ID"
             placeholderTextColor="#666"
             value={form.id}
-            onChangeText={text => setForm({ ...form, id: text })}
+            onChangeText={(text) => setForm({ ...form, id: text })}
           />
 
-          {/* 비밀번호 */}
+          {/* Password 입력 */}
           <View style={styles.passwordContainer}>
             <TextInput
               style={[styles.input, { flex: 1, marginBottom: 0, backgroundColor: 'transparent' }]}
               placeholder="Password"
+              placeholderTextColor="#666"
               secureTextEntry={secureText}
               value={form.password}
-              onChangeText={text => setForm({ ...form, password: text })}
+              onChangeText={(text) => setForm({ ...form, password: text })}
             />
             <TouchableOpacity onPress={() => setSecureText(!secureText)}>
-              <Icon name={secureText ? 'eye-off' : 'eye'} size={20} color="#666" style={styles.eyeIcon} />
+              <Icon
+                name={secureText ? 'eye-off' : 'eye'}
+                size={20}
+                color="#666"
+                style={styles.eyeIcon}
+              />
             </TouchableOpacity>
           </View>
 
-          {/* 기타 입력 */}
-          {['nickname', 'email', 'mobile'].map(field => (
+          {/* 나머지 입력 필드 */}
+          {['nickname', 'email', 'mobile'].map((field) => (
             <TextInput
               key={field}
               style={styles.input}
               placeholder={
-                field === 'nickname' ? 'Nickname' : field.charAt(0).toUpperCase() + field.slice(1)
+                field === 'nickname'
+                  ? '닉네임'
+                  : field.charAt(0).toUpperCase() + field.slice(1)
               }
               placeholderTextColor="#666"
               value={form[field]}
-              onChangeText={text => setForm({ ...form, [field]: text })}
+              onChangeText={(text) => setForm({ ...form, [field]: text })}
             />
           ))}
 
-          {/* 약관동의 */}
+          {/* 약관 동의 */}
           <View style={styles.checkboxRow}>
-            <TouchableOpacity onPress={() => setChecked(!checked)} style={styles.checkbox}>
+            <TouchableOpacity
+              onPress={() => setChecked(!checked)}
+              style={styles.checkbox}
+            >
               {checked && <View style={styles.checked} />}
             </TouchableOpacity>
             <Text style={styles.agreeText}>
@@ -214,7 +111,8 @@ const RegisterScreen = ({ navigation }) => {
               and{' '}
               <Text style={styles.link} onPress={() => navigation.navigate('Privacy')}>
                 Privacy Policy
-              </Text>.
+              </Text>
+              .
             </Text>
           </View>
 
@@ -222,12 +120,14 @@ const RegisterScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.signUpButton, { opacity: checked ? 1 : 0.5 }]}
             disabled={!checked}
-            onPress={handleSignUp}
+            onPress={() => {
+              // 회원가입 처리 로직
+            }}
           >
             <Text style={styles.signUpText}>Sign Up</Text>
           </TouchableOpacity>
 
-          {/* 로그인 링크 */}
+          {/* 로그인 이동 링크 */}
           <Text style={styles.bottomText}>
             already have an account?{' '}
             <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
@@ -243,12 +143,40 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
-  profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, gap: 12 },
-  profileImageWrapper: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#eee', alignItems: 'center', justifyContent: 'center' },
-  profileImage: { width: 60, height: 60, borderRadius: 30 },
-  fullNameInput: { flex: 1, backgroundColor: '#eee', borderRadius: 8, padding: 14 },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  profileImageWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#eee',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  fullNameInput: {
+    flex: 1,
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    padding: 14,
+  },
   input: { backgroundColor: '#eee', borderRadius: 8, padding: 14, marginBottom: 16 },
-  passwordContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eee', borderRadius: 8, paddingRight: 14, marginBottom: 16 },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    paddingRight: 14,
+    marginBottom: 16,
+  },
   eyeIcon: { marginLeft: 10 },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' },
   checkbox: { width: 20, height: 20, borderWidth: 1, borderColor: '#aaa', marginRight: 8, alignItems: 'center', justifyContent: 'center' },
