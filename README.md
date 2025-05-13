@@ -11,13 +11,14 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 ```sh
 # 프로젝트 루트에서 의존성 설치
 npm install
+npm install axios
 
 # React Native 명령어(예: npx react-native run-android)를 위해 필요합니다
 npm install --save-dev @react-native-community/cli
+npm install --save-dev @react-native/typescript-config
 ```
 
 ```sh
->>>>>>> 785f332 (Initial commit)
 # Metro 번들러 서버 실행 
 npx react-native start --reset-cache
 
@@ -75,5 +76,7 @@ git push -u origin main
 | `prettier`                                           | 2.8.8       |
 | `react-test-renderer`                                | 19.0.0      |
 | `typescript`                                         | 5.0.4       |
+| `@react-native-async-storage/async-storage`          | .-.--       |
+
 
 =======

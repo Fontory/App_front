@@ -9,15 +9,52 @@ import {
   ScrollView,
   Platform,
   View,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Container from '../Container';
+
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
 const LoginScreen = ({ navigation }) => {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!id || !password) {
+      return Alert.alert('ID와 비밀번호를 모두 입력해주세요.');
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: id, password }),
+      });
+
+      const json = await res.json();
+      console.log('서버 응답:', json);
+
+      if (res.status !== 200 || !json.user) {
+        const msg = json.message || '로그인에 실패했습니다.';
+        throw new Error(msg);
+      }
+
+      // ✅ 토큰 없이 user만 저장
+      await AsyncStorage.setItem('user', JSON.stringify(json.user));
+      Alert.alert('로그인 성공!');
+      navigation.replace('Home');
+
+    } catch (err) {
+      console.error('로그인 에러:', err);
+      Alert.alert(err.message || '네트워크 요청에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Container title="Log In">
@@ -64,17 +101,18 @@ const LoginScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('SetPassword')}
             style={{ alignSelf: 'flex-end', marginBottom: 30 }}
           >
-            <Text style={styles.linkText}>Forget Password</Text>
+            <Text style={styles.linkText}>Forget Password?</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => navigation.navigate('Home')}
+          style={[styles.loginButton, loading && { opacity: 0.6 }]}
+          onPress={handleLogin}
+          disabled={loading}
         >
-          <Text style={styles.loginText}>Log In</Text>
+          <Text style={styles.loginText}>{loading ? '로그인 중...' : 'Log In'}</Text>
         </TouchableOpacity>
 
         <Text style={styles.signupText}>
