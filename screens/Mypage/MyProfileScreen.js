@@ -1,5 +1,4 @@
-// /screens/Mypage/MyProfileScreen.js
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,88 +6,148 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Container from '../Container';
 
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
+
 const MyProfileScreen = ({ navigation }) => {
-  // 예시로 상태관리. 실제로는 context나 redux, 서버 데이터로 채우시면 됩니다.
-  const [id, setId] = useState('abcabc');
-  const [nickname, setNickname] = useState('버그찾은 구운달걀');
-  const [email, setEmail] = useState('abc123@gachon.ac.kr');
-  const [phone, setPhone] = useState('010-0000-0000');
+  const [nickname, setNickname] = useState('');
+  const [email, setEmail] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/mypage/profile`);
+        const json = await res.json();
+        console.log('프로필 데이터:', json);
+
+        if (json.status !== 0 && json.status !== 200) {
+          throw new Error(json.message);
+        }
+
+        const data = json.data;
+        setNickname(data.nickname);
+        setEmail(data.email);
+        setProfileImage(data.profileImage);
+        setName(data.name); 
+        setPhone(data.phone);  
+      } catch (err) {
+        Alert.alert('프로필 조회 실패', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        nickname,
+        email,
+        profileImage, // 현재 이미지 수정은 안 되므로 그대로 전달
+      };
+
+      const res = await fetch(`${BASE_URL}/api/mypage/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+
+      if (json.status !== 0 && json.status !== 200) {
+        throw new Error(json.message);
+      }
+
+      Alert.alert('프로필이 성공적으로 수정되었습니다.');
+      navigation.navigate('MyPage');
+    } catch (err) {
+      Alert.alert('수정 실패', err.message || '서버 오류');
+    }
+  };
 
   const handleAvatarPress = () => {
-    // TODO: 프로필 이미지 변경 로직
-    console.log('Change avatar');
+    Alert.alert('📸 아직 이미지 변경 기능은 구현되어 있지 않습니다.');
   };
 
-  const handleSubmit = () => {
-    // TODO: 서버에 수정된 프로필 정보 전송
-    console.log({ id, nickname, email, phone });
-    navigation.navigate('MyPage');
-  };
+  if (loading) {
+    return (
+      <Container title="My Profile" hideBackButton={false} showBottomBar={true}>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#000" />
+        </View>
+      </Container>
+    );
+  }
 
   return (
-    <Container
-      title="홍길동 님"
-      hideBackButton={false}
-      showBottomBar={true}
-    >
+    <Container title="My Profile" hideBackButton={false} showBottomBar={true}>
       <View style={styles.inner}>
-        {/* Avatar */}
+        {/* 프로필 이미지 */}
         <View style={styles.avatarWrapper}>
-          {/* 실제로는 <Image source={{ uri: ... }} style={styles.avatar} /> */}
-          <View style={styles.avatarPlaceholder} />
-          <TouchableOpacity
-            style={styles.avatarEditButton}
-            onPress={handleAvatarPress}
-          >
-            <Icon name="paperclip" size={20} color="#fff" />
+          <Image
+            source={
+              imageLoadError || !profileImage
+                ? require('../../assets/profile.png')
+                : { uri: `${BASE_URL}${profileImage}` }
+            }
+            style={styles.avatarPlaceholder}
+            onError={() => setImageLoadError(true)}
+          />
+          <TouchableOpacity style={styles.avatarEditButton} onPress={handleAvatarPress}>
+            <Icon name="camera" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Inputs */}
+        {/* 입력 폼 */}
         <View style={styles.form}>
-          {/* ID (읽기전용) */}
+          {/* 닉네임 */}
           <TextInput
             style={styles.input}
-            value={id}
-            onChangeText={setId}
-            editable={false}
-          />
-          {/* Nickname (수정 가능) */}
-          <TextInput
-            style={[styles.input, { color: '#666' }]}
             value={nickname}
             onChangeText={setNickname}
-            
+            placeholder="닉네임"
           />
-          {/* Email (읽기전용) */}
+          {/* 이메일 */}
           <TextInput
             style={styles.input}
             value={email}
-            keyboardType="email-address"
             onChangeText={setEmail}
-            editable={false}
+            keyboardType="email-address"
+            placeholder="이메일"
           />
-          {/* Phone (읽기전용) */}
+          {/* 이름 (읽기 전용) */}
+          <TextInput
+            style={styles.input}
+            value={name}
+            editable={false}
+            placeholder="이름"
+          />
+          {/* 전화번호 (읽기 전용) */}
           <TextInput
             style={styles.input}
             value={phone}
-            keyboardType="phone-pad"
-            onChangeText={setPhone}
             editable={false}
+            placeholder="전화번호"
+            keyboardType="phone-pad"
           />
         </View>
 
-        {/* Submit */}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmit}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.submitText}>Submit</Text>
+        {/* 제출 버튼 */}
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitText}>프로필 저장</Text>
         </TouchableOpacity>
       </View>
     </Container>
@@ -96,6 +155,7 @@ const MyProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   inner: {
     flex: 1,
     padding: 16,

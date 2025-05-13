@@ -1,4 +1,3 @@
-// screens/Login/SetPasswordScreen.js
 import React, { useState, useRef } from 'react';
 import {
   Animated,
@@ -10,27 +9,48 @@ import {
   View,
   StyleSheet,
   Platform,
+  Alert,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
-
 import Container from '../Container';
+
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
 const SetPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [sent, setSent] = useState(false);
+  const [userId, setUserId] = useState('');
   const emailAnim = useRef(new Animated.Value(30)).current;
+  const [step, setStep] = useState(0); // 0: email, 1: id 입력
 
-  const handleSendEmail = () => {
-    if (!sent) {
-      setSent(true);
+  const handleNext = async () => {
+    if (step === 0) {
+      if (!email) return Alert.alert('이메일을 입력해주세요.');
+      setStep(1);
       Animated.timing(emailAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
     } else {
-      navigation.navigate('ResetPassword');
+      if (!userId) return Alert.alert('사용자 ID를 입력해주세요.');
+
+      try {
+        const res = await fetch(`${BASE_URL}/users/findId`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const json = await res.json();
+
+        if (json.userId !== userId) {
+          throw new Error('입력한 이메일과 ID가 일치하지 않습니다.');
+        }
+
+        // 검증 성공 → 비밀번호 재설정 화면으로 이동
+        navigation.navigate('ResetPassword', { email, userId });
+      } catch (err) {
+        console.error('검증 실패:', err);
+        Alert.alert(err.message || '서버 오류');
+      }
     }
   };
 
@@ -43,10 +63,9 @@ const SetPasswordScreen = ({ navigation }) => {
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.welcome}>Welcome</Text>
-          <Text style={styles.subText}>소개소개소개</Text>
+          <Text style={styles.welcome}>비밀번호 재설정</Text>
+          <Text style={styles.subText}>가입 시 입력한 이메일과 ID를 입력해주세요.</Text>
 
           <Animated.View style={{ transform: [{ translateY: emailAnim }] }}>
             <TextInput
@@ -55,24 +74,25 @@ const SetPasswordScreen = ({ navigation }) => {
               placeholderTextColor="#666"
               value={email}
               onChangeText={setEmail}
+              keyboardType="email-address"
             />
           </Animated.View>
 
-          {sent && (
+          {step >= 1 && (
             <TextInput
-              style={[styles.input, { marginTop: 10 }]}
-              placeholder="Verification Code"
+              style={styles.input}
+              placeholder="User ID"
               placeholderTextColor="#666"
-              value={code}
-              onChangeText={setCode}
+              value={userId}
+              onChangeText={setUserId}
             />
           )}
         </ScrollView>
       </KeyboardAvoidingView>
 
       <View style={styles.footer}>
-        <TouchableOpacity onPress={handleSendEmail} style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>{sent ? 'Next' : 'Send Email'}</Text>
+        <TouchableOpacity onPress={handleNext} style={styles.sendButton}>
+          <Text style={styles.sendButtonText}>{step === 0 ? 'Next' : '확인'}</Text>
         </TouchableOpacity>
       </View>
     </Container>

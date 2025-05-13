@@ -1,4 +1,3 @@
-// screens/Login/ResetPasswordScreen.js
 import React, { useState } from 'react';
 import {
   Text,
@@ -9,16 +8,59 @@ import {
   ScrollView,
   Platform,
   View,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-
 import Container from '../Container';
 
-const ResetPasswordScreen = ({ navigation }) => {
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
+
+const ResetPasswordScreen = ({ route, navigation }) => {
+  const { email, userId } = route.params;
+
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [secure1, setSecure1] = useState(true);
   const [secure2, setSecure2] = useState(true);
+
+  const handleSubmit = async () => {
+    if (!password || !confirm) {
+      return Alert.alert('비밀번호를 모두 입력해주세요.');
+    }
+    if (password !== confirm) {
+      return Alert.alert('비밀번호가 일치하지 않습니다.');
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/users/findPassword`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          email,
+          newPassword: password,
+        }),
+      });
+
+      const json = await res.json();
+      console.log('서버 응답:', json);
+
+      if (!res.ok) {
+        throw new Error('서버 연결에 실패했습니다.');
+      }
+
+      if (json.status !== 0 && !json.message?.includes('성공')) {
+        throw new Error(json.message || '비밀번호 재설정 실패');
+      }
+
+      Alert.alert('비밀번호가 성공적으로 변경되었습니다.');
+      navigation.replace('Login');
+    } catch (err) {
+      console.error('비밀번호 재설정 실패:', err);
+      Alert.alert(err.message || '서버 오류');
+    }
+  };
+
 
   return (
     <Container title="Set Password">
@@ -31,8 +73,8 @@ const ResetPasswordScreen = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.welcome}>Welcome</Text>
-          <Text style={styles.subText}>소개소개소개</Text>
+          <Text style={styles.welcome}>비밀번호 재설정</Text>
+          <Text style={styles.subText}>새 비밀번호를 입력하고 확인해주세요.</Text>
 
           {/* New Password */}
           <View style={styles.passwordContainer}>
@@ -78,13 +120,12 @@ const ResetPasswordScreen = ({ navigation }) => {
 
       {/* Bottom Button */}
       <View style={styles.footer}>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Login')}
-      >
-        <Text style={styles.buttonText}>Create New Password</Text>
-      </TouchableOpacity>
-
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleSubmit}
+        >
+          <Text style={styles.buttonText}>비밀번호 재설정</Text>
+        </TouchableOpacity>
       </View>
     </Container>
   );

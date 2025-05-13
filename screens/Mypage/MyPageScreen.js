@@ -1,4 +1,3 @@
-// screens/Mypage/MyPageScreen.js
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -14,55 +13,60 @@ import Icon from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Container from '../Container';
 
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
+
+// ⚠️ 'leaf'는 Feather에 없음 → 안전한 아이콘으로 대체
+const LEVELS = [
+  { key: '1', label: '새싹', icon: 'user', minPosts: 0 },
+  { key: '2', label: '연습생', icon: 'smile', minPosts: 3 },
+  { key: '3', label: '필사러', icon: 'book', minPosts: 10 },
+  { key: '4', label: '디자이너', icon: 'edit', minPosts: 20 },
+  { key: '5', label: '마스터', icon: 'award', minPosts: 30 },
+];
+
 const MyPageScreen = ({ navigation }) => {
   const [profile, setProfile] = useState(null);
+  const [level, setLevel] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [imageLoadError, setImageLoadError] = useState(false); // 👈 이미지 실패 여부
 
-  // 앱 내에 저장된 로그인 사용자 정보(테스트용)
-  const loadLocalProfile = async () => {
+  const fetchProfileAndBadges = async () => {
     try {
-      const userStr = await AsyncStorage.getItem('user');
-      if (userStr) {
-        const userObj = JSON.parse(userStr);
-        setProfile({
-          nickname: userObj.nickname,
-          email: userObj.email,
-          profileImage: userObj.profileImage,
-        });
-        return true;
+      const [profileRes, badgeRes] = await Promise.all([
+        fetch(`${BASE_URL}/api/mypage/profile`),
+        fetch(`${BASE_URL}/api/mypage/badges/my`)
+      ]);
+
+      const profileJson = await profileRes.json();
+      const badgeJson = await badgeRes.json();
+
+      console.log('프로필 응답:', profileJson);
+      console.log('뱃지 응답:', badgeJson);
+
+      if (profileJson.status !== 0 && profileJson.status !== 200) {
+        throw new Error(`프로필 조회 실패: ${profileJson.message}`);
       }
-      return false;
-    } catch (e) {
-      console.error('로컬 프로필 로드 에러', e);
-      return false;
-    }
-  };
 
-  // 서버에서 프로필 조회 (userId 파라미터 기반) - 백엔드 미구현 시 주석 처리 가능
-  const fetchRemoteProfile = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      if (!userId) throw new Error('사용자 정보가 없어 프로필을 불러올 수 없습니다.');
+      if (badgeJson.status !== 0 && badgeJson.status !== 200) {
+        throw new Error(`뱃지 조회 실패: ${badgeJson.message}`);
+      }
 
-      const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
-      const res = await fetch(`${BASE_URL}/api/mypage/profile?userId=${encodeURIComponent(userId)}`);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || '프로필 조회 실패');
-      setProfile(json.data);
+      const profileData = profileJson.data;
+      const postCount = badgeJson.data.length;
+      const currentLevel = LEVELS.slice().reverse().find(l => postCount >= l.minPosts);
+
+      setProfile(profileData);
+      setLevel(currentLevel);
     } catch (e) {
-      console.error('원격 프로필 조회 에러', e);
-      Alert.alert('Error', e.message);
+      console.error('데이터 로딩 에러', e);
+      Alert.alert('에러', e.message || '프로필/레벨 정보를 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    (async () => {
-      const localLoaded = await loadLocalProfile();
-      if (!localLoaded) {
-        await fetchRemoteProfile();
-      }
-      setLoading(false);
-    })();
+    fetchProfileAndBadges();
   }, []);
 
   if (loading) {
@@ -88,18 +92,25 @@ const MyPageScreen = ({ navigation }) => {
   return (
     <Container title="My Page" hideBackButton showBottomBar>
       <ScrollView contentContainerStyle={styles.content}>
+        {/* 프로필 영역 */}
         <TouchableOpacity
           style={styles.profileCard}
           onPress={() => navigation.navigate('MyProfile')}
         >
           <Image
             source={
-              profile.profileImage
-                ? { uri: profile.profileImage }
-                : require('../../assets/profile.png')
+              imageLoadError || !profile.profileImage
+                ? require('../../assets/profile.png')
+                : { uri: `${BASE_URL}${profile.profileImage}` }
             }
             style={styles.avatar}
+            onError={() => {
+              console.log('이미지 로드 실패, 기본 이미지로 대체');
+              setImageLoadError(true);
+            }}
+            resizeMode="cover"
           />
+
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>{profile.nickname}</Text>
             <Text style={styles.userEmail}>{profile.email}</Text>
@@ -107,14 +118,19 @@ const MyPageScreen = ({ navigation }) => {
           <Icon name="chevron-right" size={20} color="#888" />
         </TouchableOpacity>
 
-        <View style={styles.levelCard}>
-          <Icon name="seedling" size={20} color="#3cb371" />
-          <Text style={styles.levelText}>Level.1 새싹</Text>
-          <TouchableOpacity style={styles.infoButton} onPress={() => navigation.navigate('LevelInfo')}>
-            <Icon name="info" size={16} color="#888" />
+        {/* 레벨 영역 */}
+        {level && (
+          <TouchableOpacity
+            style={styles.levelCard}
+            onPress={() => navigation.navigate('LevelInfo')}
+          >
+            <Icon name={level.icon} size={20} color="#3cb371" />
+            <Text style={styles.levelText}>{`Level.${level.key} ${level.label}`}</Text>
+            <Icon name="info" size={16} color="#888" style={styles.infoButton} />
           </TouchableOpacity>
-        </View>
+        )}
 
+        {/* 메뉴 */}
         <View style={styles.menuCard}>
           {[
             { icon: 'star', label: '내가 만든 폰트', onPress: () => navigation.navigate('MyFont') },
@@ -143,16 +159,42 @@ const MyPageScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { padding: 16, paddingBottom: 32 + 56 + 32 },
-  profileCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eee', borderRadius: 8, padding: 16, marginBottom: 16 },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
   avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
   profileInfo: { flex: 1 },
   userName: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
   userEmail: { fontSize: 12, color: '#666' },
-  levelCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eef1ff', borderRadius: 8, padding: 16, marginBottom: 16 },
+  levelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef1ff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
   levelText: { flex: 1, fontSize: 14, color: '#333', marginLeft: 8 },
   infoButton: { padding: 4 },
-  menuCard: { backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#eee' },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#eee' },
+  menuCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eee',
+  },
   menuIcon: { marginRight: 12 },
   menuLabel: { fontSize: 14, color: '#333' },
   menuChevron: { marginLeft: 'auto' },
