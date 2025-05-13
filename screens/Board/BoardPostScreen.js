@@ -1,4 +1,3 @@
-// screens/Board/BoardPostScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -9,11 +8,15 @@ import {
   Image,
   TextInput,
   Platform,
+  Alert,
 } from 'react-native';
 import Container from '../Container';
 import Icon from 'react-native-vector-icons/Feather';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
+
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
 const BoardPostScreen = ({ navigation }) => {
   const [photo, setPhoto] = useState(null);
@@ -32,18 +35,53 @@ const BoardPostScreen = ({ navigation }) => {
     );
   };
 
-  const handleUpload = () => {
-    // 1) 서버에 업로드 처리 로직 수행 (API 호출 등)
-    console.log({ photo, postType, body, font });
-    navigation.navigate('BoardDetail');
+  const handleUpload = async () => {
+    try {
+      const imageUrl = photo?.uri || ''; // 이미지 없으면 빈 문자열
+      const type = postType === '필사' ? 'TRANSCRIPTION' : 'GENERAL';
+
+      let fontId = null;
+      if (font === 'NanumSquare') fontId = 1;
+      else if (font === 'Gothic') fontId = 2;
+
+      const payload = {
+        imageUrl,
+        content: body,
+        postType: type,
+        fontId,
+      };
+
+      const res = await axios.post(`${BASE_URL}/api/posts`, payload, {
+        headers: {
+          'Content-Type' : 'application/json'
+        }
+      });
+
+      if (res.data?.status === 0 || res.data?.status === 200) {
+        Alert.alert('게시글 등록 완료', '게시글이 성공적으로 등록되었습니다.');
+        navigation.navigate('Board');
+      } else {
+        Alert.alert('게시글 등록 실패', res.data?.message || '알 수 없는 오류');
+      }
+    } catch (error) {
+      console.log('BASE_URL:', BASE_URL);
+      console.log('payload:', {
+        imageUrl: '',
+        content: body,
+        postType: postType === '필사' ? 'TRANSCRIPTION' : 'GENERAL',
+        fontId: font === 'NanumSquare' ? 1 : font === 'Gothic' ? 2 : null,
+      });
+
+      console.error('게시글 등록 에러:', error);
+      Alert.alert(
+        '서버 오류',
+        error.response?.data?.message || '게시글 등록 중 문제가 발생했습니다.'
+      );
+    }
   };
 
   return (
-    <Container
-      title="Write"
-      hideBackButton={false}
-      showBottomBar={true}
-    >
+    <Container title="Write" hideBackButton={false} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.wrapper}>
         {/* 1. 사진/동영상 선택 */}
         <TouchableOpacity style={styles.mediaPicker} onPress={selectMedia}>
@@ -57,7 +95,7 @@ const BoardPostScreen = ({ navigation }) => {
           )}
         </TouchableOpacity>
 
-        {/* 2. 게시글 유형 라디오 */}
+        {/* 2. 게시글 유형 선택 */}
         <View style={styles.typeRow}>
           <Text style={styles.typeLabel}>게시글 유형</Text>
           <View style={styles.radioGroup}>
@@ -100,11 +138,9 @@ const BoardPostScreen = ({ navigation }) => {
           onChangeText={setBody}
         />
 
-        {/* 4. 사용된 폰트 선택 (선택사항) */}
+        {/* 4. 사용된 폰트 선택 */}
         <View style={styles.fontRow}>
-          {/* 라벨 */}
           <Text style={styles.fontLabel}>사용된 폰트</Text>
-          {/* 드롭다운 컨테이너 */}
           <View style={styles.fontPickerContainer}>
             <Picker
               selectedValue={font}
@@ -115,9 +151,8 @@ const BoardPostScreen = ({ navigation }) => {
             >
               <Picker.Item label="선택 안함" value="" />
               <Picker.Item label="다운받은폰트-나눔스퀘어" value="NanumSquare" />
-              <Picker.Item label="다운받은폰트-고딕"     value="Gothic" />
+              <Picker.Item label="다운받은폰트-고딕" value="Gothic" />
             </Picker>
-            {/* iOS에서만 커스텀 아이콘 표시 */}
             {Platform.OS === 'ios' && (
               <Icon
                 name="chevron-down"
@@ -129,7 +164,7 @@ const BoardPostScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* 5. Upload 버튼 */}
+        {/* 5. 업로드 버튼 */}
         <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
           <Text style={styles.uploadText}>Upload</Text>
         </TouchableOpacity>
@@ -141,10 +176,8 @@ const BoardPostScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   wrapper: {
     padding: 16,
-    paddingBottom: 32 + 56 + 32, // 아래 바 + 여유
+    paddingBottom: 32 + 56 + 32,
   },
-
-  // 1. 미디어 픽커
   mediaPicker: {
     height: 140,
     borderWidth: 1,
@@ -163,8 +196,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 8,
   },
-
-  // 2. 게시글 유형 라디오
   typeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,8 +242,6 @@ const styles = StyleSheet.create({
   radioTextSelected: {
     color: '#fff',
   },
-
-  // 3. 본문 입력
   bodyInput: {
     height: 120,
     borderWidth: 1,
@@ -222,8 +251,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: '#fff',
   },
-
-  // 4. 사용된 폰트
   fontRow: {
     marginBottom: 20,
   },
@@ -239,26 +266,24 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     backgroundColor: '#fff',
-    height: 56,           // 충분한 높이 확보
+    height: 56,
     paddingHorizontal: 12,
     overflow: 'hidden',
     justifyContent: 'center',
   },
   fontPicker: {
     flex: 1,
-    height: '100%',       // 박스를 꽉 채우도록
-    color: '#333',        // selectedValue 색상(Android)
+    height: '100%',
+    color: '#333',
   },
   fontPickerItem: {
-    height: 44,           // 드롭다운 아이템 높이
+    height: 44,
     fontSize: 14,
   },
   fontPickerIcon: {
     position: 'absolute',
     right: 12,
   },
-
-  // 5. 업로드 버튼
   uploadButton: {
     backgroundColor: '#000',
     borderRadius: 30,

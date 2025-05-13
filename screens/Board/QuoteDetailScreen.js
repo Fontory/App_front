@@ -10,11 +10,14 @@ import {
   Platform,
   UIManager,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
 import Container from '../Container';
 
-const QUOTE_TEXT = '“존재하는 것을 변화시키는 것은 성숙하게 만드는 것이다.”';
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const FONT_SIZES = [12, 14, 16, 18, 20, 24];
 const FONT_FAMILIES = Platform.select({
   ios: ['System', 'Courier New', 'Georgia'],
@@ -25,16 +28,35 @@ const { width } = Dimensions.get('window');
 const PICKER_WIDTH = (width - 48) / 2;
 
 const QuoteDetailScreen = ({ navigation }) => {
-  // Android 에서 LayoutAnimation 활성화
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
+  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
 
-  const [previewText, setPreviewText] = useState(QUOTE_TEXT);
-  const [fontSize, setFontSize]     = useState(16);
+  const [quoteText, setQuoteText] = useState('');
+  const [previewText, setPreviewText] = useState('');
+  const [fontSize, setFontSize] = useState(16);
   const [fontFamily, setFontFamily] = useState(FONT_FAMILIES[0]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios
+      .get(`${BASE_URL}/quotes/today`)
+      .then(res => {
+        if (res.data?.content) {
+          setQuoteText(res.data.content);
+          setPreviewText(res.data.content);
+        } else {
+          setQuoteText('오늘의 명언이 없습니다.');
+          setPreviewText('오늘의 명언이 없습니다.');
+        }
+      })
+      .catch(err => {
+        console.error('명언 불러오기 실패:', err);
+        setQuoteText('명언을 불러오는 중 오류가 발생했습니다.');
+        setPreviewText('명언을 불러오는 중 오류가 발생했습니다.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const goNext = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -45,17 +67,22 @@ const QuoteDetailScreen = ({ navigation }) => {
     });
   };
 
+  if (loading) {
+    return (
+      <Container title="Quote Of The Day" hideBackButton={false} showBottomBar={true}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#000" />
+        </View>
+      </Container>
+    );
+  }
+
   return (
-    <Container
-      title="Quote Of The Day"
-      hideBackButton={false}
-      showBottomBar={true}
-    >
+    <Container title="Quote Of The Day" hideBackButton={false} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* 1) 고정된 quoteCard */}
+        {/* 1) 서버에서 받아온 quoteCard */}
         <View style={styles.quoteCard}>
-          <Text style={styles.quoteText}>{QUOTE_TEXT}</Text>
-          <Text style={styles.quoteAuthor}>헨리 버그슨</Text>
+          <Text style={styles.quoteText}>{quoteText}</Text>
         </View>
 
         {/* 2) 크기 & 글씨체 선택 */}
@@ -91,7 +118,7 @@ const QuoteDetailScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* 3) 수정 가능한 previewCard */}
+        {/* 3) preview 영역 */}
         <View style={styles.previewCard}>
           <TextInput
             style={[
@@ -140,7 +167,6 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-
   pickerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -164,7 +190,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 50,
   },
-
   previewCard: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -178,7 +203,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     flex: 1,
   },
-
   nextButton: {
     backgroundColor: '#000',
     borderRadius: 30,
