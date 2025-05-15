@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,77 +7,100 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Container from '../Container';
+import axios from 'axios';
 
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const profileImg = require('../../assets/profile.png');
 const { width } = Dimensions.get('window');
-// 본문 이미지 높이를 화면 너비의 0.6배로 설정
 const IMAGE_HEIGHT = width * 0.6;
-
-// TODO: 실제 데이터 받아오기 전까지 더미
-const DUMMY_POST = {
-  image: null,       // 실제로는 { uri: ... } 또는 require(...)
-  avatar: profileImg,      // 마찬가지로
-  user: '버그찾은 구운달걀',
-  text: '내용내용내용내용내용',
-  date: '2025.00.00',
-  usedFont: '맑은고딕체',
-};
 
 const BoardDetailScreen = () => {
   const navigation = useNavigation();
-  const { image, avatar, user, text, date, usedFont } = DUMMY_POST;
+  const route = useRoute();
+  const { postId } = route.params;
+
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios
+      .get(`${BASE_URL}/api/posts/${postId}`)
+      .then(res => {
+        if (res.data.status === 0 || res.data.status === 200) {
+          setPost(res.data.data);
+        } else {
+          Alert.alert('불러오기 실패', res.data.message);
+        }
+      })
+      .catch(err => {
+        console.error('게시글 상세 조회 실패:', err);
+        Alert.alert('오류', '게시글을 불러오는 중 오류가 발생했습니다.');
+      })
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  if (loading) {
+    return (
+      <Container title="Post Detail" hideBackButton={false} showBottomBar={true}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#000" />
+        </View>
+      </Container>
+    );
+  }
+
+  if (!post) return null;
 
   return (
-    <Container
-      title="Post Detail"
-      hideBackButton={false}
-      showBottomBar={true}
-    >
+    <Container title="Post Detail" hideBackButton={false} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.wrapper}>
         {/* 1. 큰 이미지 */}
         <View style={styles.imageWrapper}>
-          {image
-            ? <Image source={image} style={styles.postImage} />
-            : <View style={styles.imagePlaceholder} />
-          }
+          {post.imageUrl ? (
+            <Image source={{ uri: post.imageUrl }} style={styles.postImage} />
+          ) : (
+            <View style={styles.imagePlaceholder} />
+          )}
         </View>
 
         {/* 2. 유저 정보 + 좋아요 아이콘 */}
         <View style={styles.userRow}>
-        <View style={styles.userInfo}>
-            {/* 항상 로컬 프로필 이미지를 보여줍니다 */}
-            <Image source={avatar} style={styles.avatar} />
+          <View style={styles.userInfo}>
+            <Image source={profileImg} style={styles.avatar} />
             <TouchableOpacity
-              onPress={() => navigation.navigate('OtherProfile', { user, avatar })}
+              onPress={() =>
+                navigation.navigate('OtherProfile', {
+                  user: post.nickname,
+                  avatar: profileImg,
+                })
+              }
             >
-              <Text style={styles.userName}>{user}</Text>
+              <Text style={styles.userName}>{post.nickname}</Text>
             </TouchableOpacity>
           </View>
-          <Icon name="heart" size={30} color="#888" marginRight="10"/>
+          <Icon name="heart" size={30} color="#888" />
         </View>
 
         {/* 3. 본문 텍스트 */}
-        <Text style={styles.postText}>{text}</Text>
+        <Text style={styles.postText}>{post.content}</Text>
 
         {/* 4. 날짜 */}
-        <Text style={styles.postDate}>{date}</Text>
+        <Text style={styles.postDate}>
+          {new Date(post.createdAt).toLocaleDateString('ko-KR')}
+        </Text>
 
-        {/* 5. 사용된 폰트 보기 */}
-        <TouchableOpacity
-          style={styles.fontLink}
-          onPress={() => {
-            /* TODO: 사용된 폰트 상세 화면으로 네비게이트 */
-          }}
-        >
-          <Text style={styles.fontLinkText}>
-            이 글에 사용된 '{usedFont}' 보러가기
-          </Text>
+        {/* 5. 사용된 폰트 보기 (API에 없으므로 임시 비활성화) */}
+        {/* 추후 post.fontName 등 추가되면 활성화 */}
+        {/* <TouchableOpacity style={styles.fontLink}>
+          <Text style={styles.fontLinkText}>이 글에 사용된 '폰트명' 보러가기</Text>
           <Icon name="chevron-right" size={16} color="#0051ff" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
     </Container>
   );
@@ -86,7 +109,7 @@ const BoardDetailScreen = () => {
 const styles = StyleSheet.create({
   wrapper: {
     padding: 16,
-    paddingBottom: 32 + 56 + 32, // 탭바 높이 + 여유
+    paddingBottom: 32 + 56 + 32,
   },
   imageWrapper: {
     width: '100%',
@@ -121,13 +144,6 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     marginRight: 20,
-  },
-  avatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#ddd',
-    marginRight: 8,
   },
   userName: {
     fontSize: 14,
