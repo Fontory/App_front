@@ -43,13 +43,10 @@ const FontDetailScreen = () => {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.metaRow}>
           <Image
-            source={
-              font.originalImageUrl && font.originalImageUrl !== 'string'
-                ? { uri: font.originalImageUrl }
-                : require('../../assets/sampleprofile.png')
-            }
+            source={require('../../assets/sampleprofile.png')}
             style={styles.profile}
           />
+
           <Text style={styles.nickname}>@{font.userId}</Text>
           <View style={styles.metrics}>
             <Text style={styles.metricText}>좋아요 {font.likeCount}</Text>
@@ -69,13 +66,12 @@ const FontDetailScreen = () => {
         <Image
           source={
             font.originalImageUrl && font.originalImageUrl !== 'string'
-              ? { uri: font.originalImageUrl }
+              ? { uri: `http://ceprj.gachon.ac.kr:60023/handwriting/${font.originalImageUrl}` }
               : require('../../assets/sample.png')
           }
           style={styles.sampleImage}
           resizeMode="contain"
         />
-
         <TouchableOpacity onPress={() => handleDownload('ttf')} style={styles.downloadBtn}>
           <Text style={styles.downloadText}>TTF 다운로드</Text>
         </TouchableOpacity>
