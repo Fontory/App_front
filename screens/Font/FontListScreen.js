@@ -1,4 +1,3 @@
-// screens/Font/FontListScreen.js
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -9,9 +8,13 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Container from '../Container';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
 const FontListScreen = () => {
   const navigation = useNavigation();
@@ -19,12 +22,30 @@ const FontListScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [likes, setLikes] = useState({});
   const [loading, setLoading] = useState(true);
-  const [sortType, setSortType] = useState('popular'); // ⭐ 정렬 상태 추가
+  const [sortType, setSortType] = useState('popular');
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // ✅ 폰트 목록 요청
+  const getFullImageUrl = (url) => {
+    if (!url) return null;
+    return url.startsWith('http') ? url : `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  const loadUserFromStorage = async () => {
+    try {
+      const userStr = await AsyncStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setCurrentUser(user);
+        console.log('✅ 로그인된 유저:', user);
+      }
+    } catch (e) {
+      console.error('❌ 유저 정보 로딩 실패:', e);
+    }
+  };
+
   const fetchFonts = async () => {
     try {
-      const response = await fetch('http://ceprj.gachon.ac.kr:60023/fonts');
+      const response = await fetch(`${BASE_URL}/fonts`);
       const data = await response.json();
       setFontList(data);
     } catch (err) {
@@ -35,71 +56,99 @@ const FontListScreen = () => {
   };
 
   useEffect(() => {
+    loadUserFromStorage();
     fetchFonts();
   }, []);
 
-  // ✅ 정렬 적용
   const sortedFonts = [...fontList].sort((a, b) => {
-    if (sortType === 'popular') {
-      return b.likeCount - a.likeCount;
-    } else {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    }
+    return sortType === 'popular'
+      ? b.likeCount - a.likeCount
+      : new Date(b.createdAt) - new Date(a.createdAt);
   });
 
   const filteredFonts = sortedFonts.filter(font =>
-    font.name?.toLowerCase().includes(searchText.toLowerCase()),
+    !searchText || font.fontName?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const handleLikeToggle = (id) => {
-    setLikes(prev => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  const handleLikeToggle = async (fontId) => {
+    if (!currentUser?.userId) {
+      Alert.alert('로그인 필요', '좋아요를 누르려면 먼저 로그인해야 합니다.');
+      return;
+    }
+
+    const isLiked = likes[fontId];
+
+    if (isLiked) {
+      setLikes(prev => ({ ...prev, [fontId]: false }));
+      setFontList(prev =>
+        prev.map(font =>
+          font.fontId === fontId
+            ? { ...font, likeCount: font.likeCount - 1 }
+            : font
+        )
+      );
+    } else {
+      try {
+        const res = await fetch(`${BASE_URL}/fonts/${fontId}/like?userId=${currentUser.userId}`, {
+          method: 'POST',
+        });
+
+        if (res.ok) {
+          setLikes(prev => ({ ...prev, [fontId]: true }));
+          setFontList(prev =>
+            prev.map(font =>
+              font.fontId === fontId
+                ? { ...font, likeCount: font.likeCount + 1 }
+                : font
+            )
+          );
+        } else {
+          const result = await res.text();
+          Alert.alert('에러', result);
+        }
+      } catch (err) {
+        console.error('좋아요 실패:', err);
+        Alert.alert('오류', '좋아요 요청 중 문제가 발생했습니다.');
+      }
+    }
   };
 
-  const renderFontCard = ({ item }) => (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={() => navigation.navigate('FontDetail', { font: item })}
-    >
-      <View style={styles.card}>
-        <View style={styles.header}>
-          <Image
-            source={
-              item.originalImageUrl
-                ? { uri: item.originalImageUrl }
-                : require('../../assets/sampleprofile.png')
-            }
-            style={styles.avatar}
-          />
-          <View style={styles.headerText}>
-            <Text style={styles.fontName}>{item.name}</Text>
-            <Text style={styles.nickname}>@{item.userId}</Text>
+  const renderFontCard = ({ item }) => {
+    const isLiked = likes[item.fontId] ?? false;
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => navigation.navigate('FontDetail', { font: item })}
+      >
+        <View style={styles.card}>
+          <View style={styles.header}>
+            <Image
+              source={{ uri: `${getFullImageUrl(item.creatorProfileImage)}?v=${Date.now()}` }}
+              style={styles.avatar}
+            />
+            <View style={styles.headerText}>
+              <Text style={styles.fontName}>{item.fontName}</Text>
+              <Text style={styles.nickname}>@{item.creatorId}</Text>
+            </View>
+            <TouchableOpacity style={styles.arrow}>
+              <Text style={{ fontSize: 20, color: '#666' }}>{'>'}</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.arrow}>
-            <Text style={{ fontSize: 20, color: '#666' }}>{'>'}</Text>
-          </TouchableOpacity>
+
+          <Text style={[styles.description, { fontFamily: item.fontName }]}>{item.description}</Text>
+
+          <View style={styles.likeRow}>
+            <TouchableOpacity onPress={() => handleLikeToggle(item.fontId)}>
+              <Text style={{ fontSize: 18, color: isLiked ? 'red' : '#aaa' }}>
+                {isLiked ? '♥' : '♡'} {item.likeCount}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <Text style={styles.description}>{item.description}</Text>
-
-        <TouchableOpacity
-          style={styles.heart}
-          onPress={() => handleLikeToggle(item.fontId)}
-        >
-          <Text
-            style={{
-              color: likes[item.fontId] ? 'red' : '#aaa',
-              fontSize: 18,
-            }}
-          >
-            {likes[item.fontId] ? '♥' : '♡'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Container title="Font List" hideBackButton={true} showBottomBar={true}>
@@ -230,16 +279,16 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#333',
   },
-  heart: {
-    alignSelf: 'flex-end',
-    marginTop: 12,
-    paddingHorizontal: 4,
-  },
   avatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
     marginRight: 8,
     backgroundColor: '#ccc',
+  },
+  likeRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
   },
 });

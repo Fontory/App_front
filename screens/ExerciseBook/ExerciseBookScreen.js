@@ -1,5 +1,5 @@
 // screens/ExerciseBook/ExerciseBookScreen.js
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,10 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  TextInput,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Container from '../Container';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,45 +18,38 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.6;
 const SPACER_WIDTH = (width - ITEM_WIDTH) / 2;
-
-const rawBackgrounds = [
-  {
-    id: '1',
-    name: 'BackgroundSample1',
-    image: require('../../assets/BackgroundSample1.png'),
-  },
-  {
-    id: '2',
-    name: 'BackgroundSample2',
-    image: require('../../assets/BackgroundSample2.png'),
-  },
-  {
-    id: '3',
-    name: 'BackgroundSample3',
-    image: require('../../assets/BackgroundSample3.png'),
-  },
-];
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
 const ExerciseBookScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { fontName } = route.params;
+  const { fontId, fontName } = route.params;
 
+  const [backgrounds, setBackgrounds] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [quote, setQuote] = useState('');
+  const [loading, setLoading] = useState(true);
   const flatListRef = useRef(null);
 
-  const handleNext = () => {
-    const selected = rawBackgrounds[selectedIndex];
-    navigation.navigate('ExerciseBook2', {
-      background: selected,
-      fontName,
-      quote: '', // 다음 화면에서 quote 입력
-    });
-  };
+  useEffect(() => {
+    const fetchBackgrounds = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/backgrounds`);
+        const json = await res.json();
+        setBackgrounds(json);
+      } catch (err) {
+        console.error('배경 이미지 로드 실패:', err);
+        Alert.alert('오류', '배경 이미지를 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBackgrounds();
+  }, []);
 
   const handleScroll = (direction) => {
     const nextIndex = direction === 'left' ? selectedIndex - 1 : selectedIndex + 1;
-    if (nextIndex >= 0 && nextIndex < rawBackgrounds.length) {
+    if (nextIndex >= 0 && nextIndex < backgrounds.length) {
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
     }
   };
@@ -63,6 +59,34 @@ const ExerciseBookScreen = () => {
     const index = Math.round(offsetX / (ITEM_WIDTH + 20));
     setSelectedIndex(index);
   };
+
+  const handleNext = () => {
+  if (!quote.trim()) {
+    alert('글귀를 입력해주세요.');
+    return;
+  }
+
+  const selected = backgrounds[selectedIndex];
+
+  console.log('👉 보낼 fontId:', fontId); // 이거 꼭 추가
+  console.log('👉 보낼 backgroundId:', selected?.backgroundId);
+
+  navigation.navigate('ExerciseBook2', {
+    background: selected,
+    fontId,          // 이 값이 있어야 함!
+    fontName,
+    quote,
+  });
+};
+
+
+  if (loading) {
+    return (
+      <Container title="연습장 생성" showBottomBar={false}>
+        <View style={styles.loader}><ActivityIndicator size="large" color="#000" /></View>
+      </Container>
+    );
+  }
 
   return (
     <Container title="연습장 생성" showBottomBar={false}>
@@ -81,8 +105,8 @@ const ExerciseBookScreen = () => {
           <FlatList
             ref={flatListRef}
             horizontal
-            data={rawBackgrounds}
-            keyExtractor={(item) => item.id}
+            data={backgrounds}
+            keyExtractor={(item) => item.backgroundId.toString()}
             showsHorizontalScrollIndicator={false}
             snapToInterval={ITEM_WIDTH + 20}
             decelerationRate="fast"
@@ -96,7 +120,11 @@ const ExerciseBookScreen = () => {
             onMomentumScrollEnd={onMomentumScrollEnd}
             renderItem={({ item }) => (
               <View style={styles.imageContainer}>
-                <Image source={item.image} style={styles.previewImage} resizeMode="contain" />
+                <Image
+                  source={{ uri: `${BASE_URL}${item.imageUrl}` }}
+                  style={styles.previewImage}
+                  resizeMode="contain"
+                />
               </View>
             )}
           />
@@ -105,6 +133,16 @@ const ExerciseBookScreen = () => {
             <Text style={styles.arrow}>{'>'}</Text>
           </TouchableOpacity>
         </View>
+
+        <Text style={[styles.step, { marginTop: 20 }]}>STEP 2. 글귀를 입력해주세요</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="예) 지나온 길을 돌아볼 땐 필요한 건 후회가 아닌 평가이고..."
+          placeholderTextColor="#999"
+          value={quote}
+          onChangeText={setQuote}
+          multiline
+        />
 
         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
           <Text style={styles.nextText}>다음</Text>
@@ -143,7 +181,7 @@ const styles = StyleSheet.create({
   carouselWrapper: {
     width: '100%',
     height: ITEM_WIDTH * 1.3,
-    marginBottom: 40,
+    marginBottom: 20,
     justifyContent: 'center',
   },
   overlayArrow: {
@@ -167,6 +205,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#eee',
   },
+  input: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    backgroundColor: '#eee',
+    padding: 16,
+    fontSize: 14,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+  },
   nextButton: {
     backgroundColor: '#000',
     paddingVertical: 14,
@@ -177,5 +225,10 @@ const styles = StyleSheet.create({
   nextText: {
     color: '#fff',
     fontSize: 16,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

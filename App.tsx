@@ -34,7 +34,6 @@ import FontListScreen from './screens/Font/FontListScreen';
 import FontDetailScreen from './screens/Font/FontDetailScreen';
 import ExerciseBookScreen from './screens/ExerciseBook/ExerciseBookScreen';
 import ExerciseBook2Screen from './screens/ExerciseBook/ExerciseBook2Screen';
-import ExerciseBook3Screen from './screens/ExerciseBook/ExerciseBook3Screen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -66,11 +65,6 @@ export type RootStackParamList = {
   FontDetail: { font: any };
   ExerciseBook: { fontName: string };
   ExerciseBook2: {
-    background: { id: string; name: string; image: any };
-    fontName: string;
-    quote: string;
-  };
-  ExerciseBook3: {
     background: { id: string; name: string; image: any };
     fontName: string;
     quote: string;
@@ -114,7 +108,6 @@ const App = () => (
       <Stack.Screen name="FontDetail" component={FontDetailScreen} />
       <Stack.Screen name="ExerciseBook" component={ExerciseBookScreen} />
       <Stack.Screen name="ExerciseBook2" component={ExerciseBook2Screen} />
-      <Stack.Screen name="ExerciseBook3" component={ExerciseBook3Screen} />
     </Stack.Navigator>
   </NavigationContainer>
 );
