@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
+  View, Text, StyleSheet, Image,
+  TouchableOpacity, ScrollView, Alert,
 } from 'react-native';
 import Container from '../Container';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -18,17 +13,18 @@ const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const FontDetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { font } = route.params;
+  const { font, onLikeToggle } = route.params;
 
   const [liked, setLiked] = useState(font.liked ?? false);
-  const [likeCount, setLikeCount] = useState(font.likeCount || 0);
+  const [likeCount, setLikeCount] = useState(font.likeCount ?? 0);
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
       const userStr = await AsyncStorage.getItem('user');
       if (userStr) {
-        setCurrentUser(JSON.parse(userStr));
+        const user = JSON.parse(userStr);
+        setCurrentUser(user);
       }
     };
     loadUser();
@@ -51,8 +47,10 @@ const FontDetailScreen = () => {
     try {
       const res = await fetch(url, { method });
       if (res.ok) {
-        setLiked(!liked);
-        setLikeCount(prev => prev + (liked ? -1 : 1));
+        const newLiked = !liked;
+        setLiked(newLiked);
+        setLikeCount(prev => prev + (newLiked ? 1 : -1));
+        if (onLikeToggle) onLikeToggle(font.fontId, newLiked);
       } else {
         const result = await res.text();
         Alert.alert('에러', result);
@@ -92,7 +90,6 @@ const FontDetailScreen = () => {
     });
   };
 
-  // ✅ 설명 이미지 URL 생성
   const renderedDescriptionUrl = `${BASE_URL}/fonts/${font.fontId}/render?text=${encodeURIComponent(font.description)}`;
 
   return (
@@ -154,6 +151,9 @@ const FontDetailScreen = () => {
 };
 
 export default FontDetailScreen;
+
+
+
 
 const styles = StyleSheet.create({
   container: { padding: 20 },

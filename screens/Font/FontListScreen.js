@@ -48,7 +48,6 @@ const FontListScreen = () => {
       const data = await response.json();
       setFontList(data);
 
-      // ✅ liked 값 기반으로 초기 likes 상태 세팅
       const likeMap = {};
       data.forEach(font => {
         if (font.fontId != null) {
@@ -66,7 +65,14 @@ const FontListScreen = () => {
   useEffect(() => {
     loadUserFromStorage();
     fetchFonts();
-  }, []);
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchFonts(); // 다시 들어올 때마다 최신 상태로 갱신
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
 
   const sortedFonts = [...fontList].sort((a, b) => {
     return sortType === 'popular'
@@ -116,7 +122,24 @@ const FontListScreen = () => {
     return (
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() => navigation.navigate('FontDetail', { font: item })}
+        onPress={() =>
+          navigation.navigate('FontDetail', {
+            font: {
+              ...item,
+              liked: likes[item.fontId], // ✅ 최신 liked 상태 반영
+            },
+            onLikeToggle: (fontId, newLiked) => {
+              setLikes(prev => ({ ...prev, [fontId]: newLiked }));
+              setFontList(prev =>
+                prev.map(font =>
+                  font.fontId === fontId
+                    ? { ...font, likeCount: font.likeCount + (newLiked ? 1 : -1) }
+                    : font
+                )
+              );
+            }
+          })
+        }
       >
         <View style={styles.card}>
           <View style={styles.header}>
