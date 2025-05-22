@@ -36,7 +36,6 @@ const FontListScreen = () => {
       if (userStr) {
         const user = JSON.parse(userStr);
         setCurrentUser(user);
-        console.log('✅ 로그인된 유저:', user);
       }
     } catch (e) {
       console.error('❌ 유저 정보 로딩 실패:', e);
@@ -48,6 +47,15 @@ const FontListScreen = () => {
       const response = await fetch(`${BASE_URL}/fonts`);
       const data = await response.json();
       setFontList(data);
+
+      // ✅ liked 값 기반으로 초기 likes 상태 세팅
+      const likeMap = {};
+      data.forEach(font => {
+        if (font.fontId != null) {
+          likeMap[font.fontId] = !!font.liked;
+        }
+      });
+      setLikes(likeMap);
     } catch (err) {
       console.error('폰트 데이터를 불러오지 못했습니다:', err);
     } finally {
@@ -77,44 +85,33 @@ const FontListScreen = () => {
     }
 
     const isLiked = likes[fontId];
+    const url = `${BASE_URL}/fonts/${fontId}/like?userId=${currentUser.userId}`;
+    const method = isLiked ? 'DELETE' : 'POST';
 
-    if (isLiked) {
-      setLikes(prev => ({ ...prev, [fontId]: false }));
-      setFontList(prev =>
-        prev.map(font =>
-          font.fontId === fontId
-            ? { ...font, likeCount: font.likeCount - 1 }
-            : font
-        )
-      );
-    } else {
-      try {
-        const res = await fetch(`${BASE_URL}/fonts/${fontId}/like?userId=${currentUser.userId}`, {
-          method: 'POST',
-        });
-
-        if (res.ok) {
-          setLikes(prev => ({ ...prev, [fontId]: true }));
-          setFontList(prev =>
-            prev.map(font =>
-              font.fontId === fontId
-                ? { ...font, likeCount: font.likeCount + 1 }
-                : font
-            )
-          );
-        } else {
-          const result = await res.text();
-          Alert.alert('에러', result);
-        }
-      } catch (err) {
-        console.error('좋아요 실패:', err);
-        Alert.alert('오류', '좋아요 요청 중 문제가 발생했습니다.');
+    try {
+      const res = await fetch(url, { method });
+      if (res.ok) {
+        setLikes(prev => ({ ...prev, [fontId]: !isLiked }));
+        setFontList(prev =>
+          prev.map(font =>
+            font.fontId === fontId
+              ? { ...font, likeCount: font.likeCount + (isLiked ? -1 : 1) }
+              : font
+          )
+        );
+      } else {
+        const msg = await res.text();
+        Alert.alert('서버 오류', msg);
       }
+    } catch (err) {
+      console.error('좋아요 요청 실패:', err);
+      Alert.alert('네트워크 오류', '요청 처리 중 문제가 발생했습니다.');
     }
   };
 
   const renderFontCard = ({ item }) => {
     const isLiked = likes[item.fontId] ?? false;
+    const renderImageUri = `${BASE_URL}/fonts/${item.fontId}/render?text=${encodeURIComponent(item.description)}`;
 
     return (
       <TouchableOpacity
@@ -136,7 +133,11 @@ const FontListScreen = () => {
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.description, { fontFamily: item.fontName }]}>{item.description}</Text>
+          <Image
+            source={{ uri: renderImageUri }}
+            style={styles.descriptionImage}
+            resizeMode="contain"
+          />
 
           <View style={styles.likeRow}>
             <TouchableOpacity onPress={() => handleLikeToggle(item.fontId)}>
@@ -251,9 +252,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#f9f9f9',
     borderRadius: 12,
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 12,
     elevation: 2,
   },
   header: {
@@ -274,10 +275,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     justifyContent: 'center',
   },
-  description: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#333',
+  descriptionImage: {
+    width: '100%',
+    height: undefined,
+    aspectRatio: 4,
+    marginTop: 0,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   avatar: {
     width: 36,
@@ -289,6 +293,6 @@ const styles = StyleSheet.create({
   likeRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 8,
+    marginTop: 0,
   },
 });
