@@ -7,8 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  PermissionsAndroid,
-  Platform,
 } from 'react-native';
 import Container from '../Container';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -21,7 +19,8 @@ const FontDetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { font } = route.params;
-  const [liked, setLiked] = useState(false);
+
+  const [liked, setLiked] = useState(font.liked ?? false);
   const [likeCount, setLikeCount] = useState(font.likeCount || 0);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -46,38 +45,27 @@ const FontDetailScreen = () => {
       return;
     }
 
-    if (liked) {
-      setLiked(false);
-      setLikeCount(prev => prev - 1);
-    } else {
-      try {
-        const res = await fetch(
-          `${BASE_URL}/fonts/${font.fontId}/like?userId=${currentUser.userId}`,
-          { method: 'POST' }
-        );
-        if (res.ok) {
-          setLiked(true);
-          setLikeCount(prev => prev + 1);
-        } else {
-          const result = await res.text();
-          Alert.alert('에러', result);
-        }
-      } catch (err) {
-        console.error('좋아요 실패:', err);
-        Alert.alert('오류', '좋아요 중 문제가 발생했습니다.');
+    const url = `${BASE_URL}/fonts/${font.fontId}/like?userId=${currentUser.userId}`;
+    const method = liked ? 'DELETE' : 'POST';
+
+    try {
+      const res = await fetch(url, { method });
+      if (res.ok) {
+        setLiked(!liked);
+        setLikeCount(prev => prev + (liked ? -1 : 1));
+      } else {
+        const result = await res.text();
+        Alert.alert('에러', result);
       }
+    } catch (err) {
+      console.error('좋아요 실패:', err);
+      Alert.alert('오류', '좋아요 처리 중 문제가 발생했습니다.');
     }
   };
 
   const handleDownload = async (type) => {
     const fileName = type === 'ttf' ? font.ttfUrl : font.otfUrl;
     const url = `${BASE_URL}/fonts/${fileName}`;
-
-    if (!fileName || !url) {
-      Alert.alert('❌ 오류', 'URL이 올바르지 않아요.');
-      return;
-    }
-
     const path = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
     try {
@@ -99,11 +87,13 @@ const FontDetailScreen = () => {
 
   const handleCreateExerciseBook = () => {
     navigation.navigate('ExerciseBook', {
-    fontId: font.fontId,
-    fontName: font.fontName,
-});
-
+      fontId: font.fontId,
+      fontName: font.fontName,
+    });
   };
+
+  // ✅ 설명 이미지 URL 생성
+  const renderedDescriptionUrl = `${BASE_URL}/fonts/${font.fontId}/render?text=${encodeURIComponent(font.description)}`;
 
   return (
     <Container title={font.fontName} showBottomBar={false}>
@@ -117,14 +107,11 @@ const FontDetailScreen = () => {
             }
             style={styles.profile}
           />
-
           <Text style={styles.nickname}>@{font.creatorId}</Text>
-
           <View style={styles.metrics}>
             <Text style={styles.metricText}>좋아요 {likeCount}</Text>
             <Text style={styles.metricText}>다운로드 {font.downloadCount}</Text>
           </View>
-
           <TouchableOpacity onPress={handleLike}>
             <Text style={{ fontSize: 18, color: liked ? 'red' : '#aaa' }}>
               {liked ? '♥' : '♡'}
@@ -133,7 +120,11 @@ const FontDetailScreen = () => {
         </View>
 
         <Text style={styles.sectionTitle}>설명</Text>
-        <Text style={styles.description}>{font.description}</Text>
+        <Image
+          source={{ uri: renderedDescriptionUrl }}
+          style={styles.descriptionImage}
+          resizeMode="contain"
+        />
 
         <Text style={styles.sectionTitle}>샘플 이미지</Text>
         <Image
@@ -198,14 +189,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 6,
   },
-  description: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#333',
+  descriptionImage: {
+    width: '100%',
+    height: undefined,
+    aspectRatio: 4,
+    borderRadius: 8,
+    marginBottom: 16,
+    backgroundColor: '#f0f0f0',
   },
   sampleImage: {
     width: '100%',
-    height: 180,
+    height: 320,
     borderRadius: 12,
     marginBottom: 20,
     backgroundColor: '#eee',

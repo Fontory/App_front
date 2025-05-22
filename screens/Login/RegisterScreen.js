@@ -78,7 +78,7 @@ const RegisterScreen = ({ navigation }) => {
   
         imageForm.append('image', file);
   
-        const uploadRes = await fetch(`${BASE_URL}/users/profile-image`, {
+        const uploadRes = await fetch(`${BASE_URL}/users/profile-image/signup`, {
           method: 'POST',
           body: imageForm,
           headers: {
