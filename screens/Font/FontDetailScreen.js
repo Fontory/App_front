@@ -21,6 +21,7 @@ const FontDetailScreen = () => {
 
   useEffect(() => {
     const loadUser = async () => {
+      console.log('📦 FontDetailScreen에 전달된 route.params:', route.params);
       const userStr = await AsyncStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
@@ -96,12 +97,12 @@ const FontDetailScreen = () => {
     <Container title={font.fontName} showBottomBar={false}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.metaRow}>
-          <Image
-            source={
-              font.creatorProfileImage
-                ? { uri: `${getFullUrl(font.creatorProfileImage)}?v=${Date.now()}` }
-                : require('../../assets/sampleprofile.png')
-            }
+        <Image
+          source={
+            font.creatorProfileImage
+              ? { uri: `${getFullUrl(font.creatorProfileImage)}?v=${Date.now()}` }
+              : require('../../assets/sampleprofile.png')
+          }
             style={styles.profile}
           />
           <Text style={styles.nickname}>@{font.creatorId}</Text>

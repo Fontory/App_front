@@ -10,12 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Container from '../Container';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
-// ⚠️ 'leaf'는 Feather에 없음 → 안전한 아이콘으로 대체
 const LEVELS = [
   { key: '1', label: '새싹', icon: 'user', minPosts: 0 },
   { key: '2', label: '연습생', icon: 'smile', minPosts: 3 },
@@ -28,20 +27,20 @@ const MyPageScreen = ({ navigation }) => {
   const [profile, setProfile] = useState(null);
   const [level, setLevel] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [imageLoadError, setImageLoadError] = useState(false); // 👈 이미지 실패 여부
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   const fetchProfileAndBadges = async () => {
     try {
       const [profileRes, badgeRes] = await Promise.all([
-        fetch(`${BASE_URL}/api/mypage/profile`),
-        fetch(`${BASE_URL}/api/mypage/badges/my`)
+        fetch(`${BASE_URL}/api/mypage/profile`, { credentials: 'include' }),
+        fetch(`${BASE_URL}/api/mypage/badges/my`, { credentials: 'include' })
       ]);
 
       const profileJson = await profileRes.json();
       const badgeJson = await badgeRes.json();
 
-      console.log('프로필 응답:', profileJson);
-      console.log('뱃지 응답:', badgeJson);
+      console.log('📦 프로필 응답:', profileJson);
+      console.log('📦 뱃지 응답:', badgeJson);
 
       if (profileJson.status !== 0 && profileJson.status !== 200) {
         throw new Error(`프로필 조회 실패: ${profileJson.message}`);
@@ -57,8 +56,11 @@ const MyPageScreen = ({ navigation }) => {
 
       setProfile(profileData);
       setLevel(currentLevel);
+
+      // ✅ 프로필 이미지 정보 저장
+      await AsyncStorage.setItem('user_profile_image', profileData.profileImage || '');
     } catch (e) {
-      console.error('데이터 로딩 에러', e);
+      console.error('❌ 데이터 로딩 에러:', e);
       Alert.alert('에러', e.message || '프로필/레벨 정보를 불러오지 못했습니다.');
     } finally {
       setLoading(false);
@@ -92,7 +94,6 @@ const MyPageScreen = ({ navigation }) => {
   return (
     <Container title="My Page" hideBackButton showBottomBar>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* 프로필 영역 */}
         <TouchableOpacity
           style={styles.profileCard}
           onPress={() => navigation.navigate('MyProfile')}
@@ -101,16 +102,17 @@ const MyPageScreen = ({ navigation }) => {
             source={
               imageLoadError || !profile.profileImage
                 ? require('../../assets/profile.png')
-                : { uri: `${BASE_URL}${profile.profileImage}` }
+                : {
+                    uri: `${BASE_URL}/profiles/${profile.profileImage.replace(/^.*[\\/]/, '')}?v=${Date.now()}`
+                  }
             }
             style={styles.avatar}
             onError={() => {
-              console.log('이미지 로드 실패, 기본 이미지로 대체');
+              console.log('프로필 이미지 로드 실패');
               setImageLoadError(true);
             }}
             resizeMode="cover"
           />
-
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>{profile.nickname}</Text>
             <Text style={styles.userEmail}>{profile.email}</Text>
@@ -118,7 +120,6 @@ const MyPageScreen = ({ navigation }) => {
           <Icon name="chevron-right" size={20} color="#888" />
         </TouchableOpacity>
 
-        {/* 레벨 영역 */}
         {level && (
           <TouchableOpacity
             style={styles.levelCard}
@@ -130,7 +131,6 @@ const MyPageScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
-        {/* 메뉴 */}
         <View style={styles.menuCard}>
           {[
             { icon: 'star', label: '내가 만든 폰트', onPress: () => navigation.navigate('MyFont') },
@@ -158,7 +158,7 @@ const MyPageScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 16, paddingBottom: 32 + 56 + 32 },
+  content: { padding: 16, paddingBottom: 120 },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',

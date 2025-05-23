@@ -1,46 +1,103 @@
-// screens/Mypage/MyFontScreen.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import Container from '../Container';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DUMMY_FONTS = [
-  { id: '1', name: '성실체', preview: '폰트 미리보기 입니다', likes: 5, isPublic: true },
-  { id: '2', name: '성실체', preview: '폰트 미리보기 입니다', likes: 0, isPublic: false },
-  { id: '3', name: '성실체', preview: '폰트 미리보기 입니다', likes: 5, isPublic: true },
-  { id: '4', name: '성실체', preview: '폰트 미리보기 입니다', likes: 5, isPublic: true },
-];
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
-const MyFontScreen = ({ navigation }) => {
+const MyFontScreen = () => {
+  const navigation = useNavigation();
+  const [fonts, setFonts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem('user');
+        const image = await AsyncStorage.getItem('user_profile_image'); // ✅ 프로필 이미지 불러오기
+
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setCurrentUser({ ...user, profileImage: image || null }); // ✅ profileImage 포함 저장
+
+          const response = await fetch(`${BASE_URL}/api/mypage/fonts/my`, {
+            credentials: 'include',
+          });
+          const result = await response.json();
+
+          if (result.status === 200 && result.data) {
+            setFonts(result.data);
+          } else {
+            Alert.alert('에러', result.message || '폰트 불러오기 실패');
+          }
+        }
+      } catch (e) {
+        console.error('폰트 불러오기 오류', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const getFullUrl = (url) => {
+    if (!url) return null;
+    return url.startsWith('http') ? url : `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  const renderImageUri = (fontId, description) => {
+    return `${BASE_URL}/fonts/${fontId}/render?text=${encodeURIComponent(description)}`;
+  };
+
+  if (loading) {
+    return (
+      <Container title="My Font" hideBackButton showBottomBar>
+        <ActivityIndicator size="large" color="#000" style={{ marginTop: 40 }} />
+      </Container>
+    );
+  }
+
   return (
-    <Container
-      title="My Font"
-      hideBackButton={false}
-      showBottomBar={true}
-    >
+    <Container title="My Font" hideBackButton showBottomBar>
       <ScrollView contentContainerStyle={styles.scroll}>
-        {DUMMY_FONTS.map((font) => (
+        {fonts.map((font) => (
           <TouchableOpacity
-            key={font.id}
+            key={font.fontId}
             style={styles.card}
             activeOpacity={0.8}
             onPress={() => {
-              /* 좋아요 눌렀을 때 상세로 이동하거나, 편집 모달 띄우기 등 */
+              navigation.navigate('FontDetail', {
+                font: {
+                  ...font,
+                  fontName: font.fontName || font.name,
+                  creatorId: currentUser?.userId ?? '',
+                  creatorProfileImage: currentUser?.profileImage
+                    ? `profiles/${currentUser.profileImage}`
+                    : null,
+                  // ✅ 포함
+                }
+              });
             }}
           >
-            {/* 헤더: 폰트 이름 + 우측 아이콘 */}
             <View style={styles.cardHeader}>
-              <Text style={styles.fontName}>{font.name}</Text>
-              {font.isPublic ? (
+              <Text style={styles.fontName}>{font.fontName || font.name}</Text>
+              {font.isPublic === 'Y' ? (
                 <View style={styles.likeBadge}>
                   <Icon name="heart" size={14} color="#D0021B" />
-                  <Text style={styles.likeText}>{font.likes}</Text>
+                  <Text style={styles.likeText}>{font.likeCount}</Text>
                 </View>
               ) : (
                 <View style={styles.privateBadge}>
@@ -48,8 +105,12 @@ const MyFontScreen = ({ navigation }) => {
                 </View>
               )}
             </View>
-            {/* 미리보기 텍스트 */}
-            <Text style={styles.previewText}>{font.preview}</Text>
+
+            <Image
+              source={{ uri: renderImageUri(font.fontId, font.description) }}
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -107,10 +168,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
   },
-  previewText: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
+  previewImage: {
+    width: '100%',
+    height: undefined,
+    aspectRatio: 4,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
   },
 });
 
