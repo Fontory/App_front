@@ -62,27 +62,52 @@ const FontDetailScreen = () => {
     }
   };
 
-  const handleDownload = async (type) => {
-    const fileName = type === 'ttf' ? font.ttfUrl : font.otfUrl;
-    const url = `${BASE_URL}/fonts/${fileName}`;
-    const path = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+const notifyDownload = async (fontId) => {
+  console.log('📢 notifyDownload 진입');
+  try {
+    await fetch(`${BASE_URL}/fonts/${fontId}/download`, {
+      method: 'POST',
+    });
+    console.log('✅ 다운로드 기록 서버 전송 완료');
+  } catch (err) {
+    console.warn('❌ 다운로드 기록 전송 실패:', err);
+  }
+};
 
-    try {
-      const result = await RNFS.downloadFile({
-        fromUrl: url,
-        toFile: path,
-      }).promise;
+const handleDownload = async (type) => {
+  const fileName = type === 'ttf' ? font.ttfUrl : font.otfUrl;
+  const url = `${BASE_URL}/fonts/${fileName}`;
+  const path = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
-      if (result.statusCode === 200) {
-        Alert.alert('✅ 다운로드 완료', `폰트가 저장되었습니다:\n${path}`);
-      } else {
-        Alert.alert('❌ 다운로드 실패', `statusCode: ${result.statusCode}`);
+  try {
+    const result = await RNFS.downloadFile({
+      fromUrl: url,
+      toFile: path,
+    }).promise;
+
+    if (result.statusCode === 200) {
+      Alert.alert('✅ 다운로드 완료', `폰트가 저장되었습니다:\n${path}`);
+      
+      // ✅ 다운로드 기록 API 호출 (다운로드는 이미 완료됨)
+      const saveUrl = `${BASE_URL}/fonts/${font.fontId}/save?userId=${currentUser.userId}`;
+      try {
+        const res = await fetch(saveUrl, { method: 'POST' });
+        const text = await res.text();
+        console.log('✅ 다운로드 기록 응답:', text);
+      } catch (err) {
+        console.error('❌ 다운로드 기록 실패:', err);
       }
-    } catch (error) {
-      console.error('다운로드 오류:', error);
-      Alert.alert('❌ 오류', '다운로드 중 문제가 발생했습니다.');
+
+    } else {
+      Alert.alert('❌ 다운로드 실패', `statusCode: ${result.statusCode}`);
     }
-  };
+  } catch (error) {
+    console.error('다운로드 오류:', error);
+    Alert.alert('❌ 오류', '다운로드 중 문제가 발생했습니다.');
+  }
+};
+
+
 
   const handleCreateExerciseBook = () => {
     navigation.navigate('ExerciseBook', {
