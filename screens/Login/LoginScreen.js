@@ -14,6 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Container from '../Container';
+import axios from 'axios'; // ✅ 추가
 
 const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
@@ -27,24 +28,26 @@ const LoginScreen = ({ navigation }) => {
     if (!id || !password) {
       return Alert.alert('ID와 비밀번호를 모두 입력해주세요.');
     }
+
     setLoading(true);
+
     try {
-      const res = await fetch(`${BASE_URL}/users/login`, {
-        method: 'POST',
+      const res = await axios.post(`${BASE_URL}/users/login`, {
+        userId: id,
+        password,
+      }, {
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: id, password }),
+        withCredentials: true, // ✅ 세션 쿠키 저장
       });
 
-      const json = await res.json();
-      console.log('서버 응답:', json);
+      console.log('서버 응답:', res.data);
 
-      if (res.status !== 200 || !json.user) {
-        const msg = json.message || '로그인에 실패했습니다.';
+      if (res.status !== 200 || !res.data.user) {
+        const msg = res.data.message || '로그인에 실패했습니다.';
         throw new Error(msg);
       }
 
-      // ✅ 토큰 없이 user만 저장
-      await AsyncStorage.setItem('user', JSON.stringify(json.user));
+      await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
       Alert.alert('로그인 성공!');
       navigation.replace('Home');
 

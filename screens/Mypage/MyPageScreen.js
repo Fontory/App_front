@@ -82,6 +82,9 @@ const MyPageScreen = ({ navigation }) => {
   }
 
   if (!profile) {
+    useEffect(() => {
+      navigation.navigate('Welcome'); // 자동 이동
+    }, [navigation]);
     return (
       <Container title="My Page" hideBackButton showBottomBar>
         <View style={styles.loaderContainer}>

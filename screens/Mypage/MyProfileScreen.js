@@ -101,11 +101,15 @@ const MyProfileScreen = ({ navigation }) => {
             source={
               imageLoadError || !profileImage
                 ? require('../../assets/profile.png')
-                : { uri: `${BASE_URL}${profileImage}` }
+                : { uri: `${BASE_URL}${profileImage.replace('/uploads/profile/', '/uploads/profiles/')}` }
             }
             style={styles.avatarPlaceholder}
-            onError={() => setImageLoadError(true)}
+            onError={(e) => {
+              console.log('❌ 이미지 로딩 에러:', e.nativeEvent);
+              setImageLoadError(true);
+            }}
           />
+
           <TouchableOpacity style={styles.avatarEditButton} onPress={handleAvatarPress}>
             <Icon name="camera" size={20} color="#fff" />
           </TouchableOpacity>
