@@ -51,13 +51,19 @@ const MyPageScreen = ({ navigation }) => {
       }
 
       const profileData = profileJson.data;
-      const postCount = badgeJson.data.length;
-      const currentLevel = LEVELS.slice().reverse().find(l => postCount >= l.minPosts);
+      const badgeList = badgeJson.data;
+
+      const maxLevel = badgeList.reduce((max, badge) => {
+        const match = badge.name.match(/Lv\.(\d+)/);
+        const levelNum = match ? parseInt(match[1], 10) : 0;
+        return levelNum > max ? levelNum : max;
+      }, 0);
+
+      const currentLevel = LEVELS.find(l => parseInt(l.key) === maxLevel);
 
       setProfile(profileData);
       setLevel(currentLevel);
 
-      // ✅ 프로필 이미지 정보 저장
       await AsyncStorage.setItem('user_profile_image', profileData.profileImage || '');
     } catch (e) {
       console.error('❌ 데이터 로딩 에러:', e);
