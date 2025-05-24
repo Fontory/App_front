@@ -16,12 +16,16 @@ const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const BoardScreen = ({ navigation }) => {
   const [posts, setPosts] = useState([]);
   const [quote, setQuote] = useState('');
+  const [filterType, setFilterType] = useState('ALL'); // 추가: 전체 or TRANSCRIPTION
+
+  const truncate = (text, limit) =>
+    text.length > limit ? text.substring(0, limit) + '...' : text;
 
   useEffect(() => {
     // 명언 불러오기
-    axios
-      .get(`${BASE_URL}/quotes/today`)
+    axios.get(`${BASE_URL}/quotes/today`)
       .then(res => {
+        console.log('📥 명언 응답:', res.data);
         if (res.data.content) {
           setQuote(res.data.content);
         } else {
@@ -36,27 +40,34 @@ const BoardScreen = ({ navigation }) => {
     // 게시글 불러오기
     axios.get(`${BASE_URL}/api/posts?sort=latest`)
       .then(res => {
-        console.log('게시글 응답:', res.data);
-        if (res.data.status === 200 && Array.isArray(res.data.data.posts)) {
+        console.log('📥 게시글 응답:', res.data);
+        if ((res.data.status === 0 || res.data.status === 200) && Array.isArray(res.data.data.posts)) {
           setPosts(res.data.data.posts);
         } else {
-          console.warn('게시글 불러오기 실패:', res.data.message);
+          console.warn('⚠️ 게시글 상태값 이상:', res.data.message);
         }
       })
-      .catch(err => console.error('게시글 호출 에러:', err));
+      .catch(err => {
+        console.error('❌ 게시글 호출 에러:', err.message);
+        if (err.response) {
+          console.log('📤 서버 응답:', err.response.status, err.response.data);
+        } else {
+          console.log('❌ 서버 응답 없음 (Network Error)');
+        }
+      });
   }, []);
 
-  const truncate = (text, limit) =>
-    text.length > limit ? text.substring(0, limit) + '...' : text;
+  // 필터링된 게시글
+  const filteredPosts = filterType === 'ALL'
+    ? posts
+    : posts.filter(post => post.postType === 'TRANSCRIPTION');
 
   return (
     <Container title="Board" hideBackButton={true} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.wrapper}>
         {/* Quote card */}
         <View style={styles.quoteCard}>
-          <Text style={styles.quoteText}>
-            {truncate(quote, 20)}
-          </Text>
+          <Text style={styles.quoteText}>{truncate(quote, 20)}</Text>
           <TouchableOpacity
             style={styles.moreButton}
             onPress={() => navigation.navigate('QuoteDetail')}
@@ -68,20 +79,23 @@ const BoardScreen = ({ navigation }) => {
         {/* Filters */}
         <View style={styles.filtersRow}>
           <Icon name="sliders" size={20} color="#444" style={styles.filterIcon} />
-          <TouchableOpacity style={styles.filterButton}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => setFilterType('ALL')}>
             <Text style={styles.filterText}>전체</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => setFilterType('TRANSCRIPTION')}>
             <Text style={styles.filterText}>필사</Text>
           </TouchableOpacity>
         </View>
 
         {/* Post list */}
-        {posts.map(post => (
+        {filteredPosts.map(post => (
           <View key={post.postId} style={styles.postCard}>
             <View style={styles.postRow}>
               {post.imageUrl ? (
-                <Image source={{ uri: post.imageUrl }} style={styles.thumbnailImage} />
+                <Image
+                  source={{ uri: post.imageUrl.replace('/uploads/post/', '/images/') }}
+                  style={styles.thumbnailImage}
+                />
               ) : (
                 <View style={styles.thumbnailPlaceholder} />
               )}

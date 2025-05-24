@@ -42,7 +42,6 @@ const handleUpload = async () => {
   if (font === 'NanumSquare') fontId = 3;
   else if (font === 'Gothic') fontId = 4;
 
-
   const formData = new FormData();
 
   if (photo?.uri) {
