@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
   ScrollView,
   Image,
 } from 'react-native';
@@ -16,7 +16,7 @@ const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const BoardScreen = ({ navigation }) => {
   const [posts, setPosts] = useState([]);
   const [quote, setQuote] = useState('');
-  const [filterType, setFilterType] = useState('ALL'); // 추가: 전체 or TRANSCRIPTION
+  const [filterType, setFilterType] = useState('ALL');
 
   const truncate = (text, limit) =>
     text.length > limit ? text.substring(0, limit) + '...' : text;
@@ -26,11 +26,7 @@ const BoardScreen = ({ navigation }) => {
     axios.get(`${BASE_URL}/quotes/today`)
       .then(res => {
         console.log('📥 명언 응답:', res.data);
-        if (res.data.content) {
-          setQuote(res.data.content);
-        } else {
-          setQuote('오늘의 명언이 없습니다.');
-        }
+        setQuote(res.data.content || '오늘의 명언이 없습니다.');
       })
       .catch(err => {
         console.error('명언 가져오기 실패:', err);
@@ -57,7 +53,6 @@ const BoardScreen = ({ navigation }) => {
       });
   }, []);
 
-  // 필터링된 게시글
   const filteredPosts = filterType === 'ALL'
     ? posts
     : posts.filter(post => post.postType === 'TRANSCRIPTION');
@@ -65,7 +60,7 @@ const BoardScreen = ({ navigation }) => {
   return (
     <Container title="Board" hideBackButton={true} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.wrapper}>
-        {/* Quote card */}
+        {/* 명언 카드 */}
         <View style={styles.quoteCard}>
           <Text style={styles.quoteText}>{truncate(quote, 20)}</Text>
           <TouchableOpacity
@@ -76,7 +71,7 @@ const BoardScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Filters */}
+        {/* 필터 */}
         <View style={styles.filtersRow}>
           <Icon name="sliders" size={20} color="#444" style={styles.filterIcon} />
           <TouchableOpacity style={styles.filterButton} onPress={() => setFilterType('ALL')}>
@@ -87,35 +82,54 @@ const BoardScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Post list */}
-        {filteredPosts.map(post => (
-          <View key={post.postId} style={styles.postCard}>
-            <View style={styles.postRow}>
-              {post.imageUrl ? (
-                <Image
-                  source={{ uri: post.imageUrl.replace('/uploads/post/', '/images/') }}
-                  style={styles.thumbnailImage}
-                />
-              ) : (
-                <View style={styles.thumbnailPlaceholder} />
-              )}
-              <View style={styles.postInfo}>
-                <View style={styles.postHeader}>
-                  <View style={styles.avatarPlaceholder} />
-                  <Text style={styles.userName}>{post.nickname}</Text>
+        {/* 게시글 목록 */}
+        {filteredPosts.map(post => {
+          const avatarUrl = post.profileImage.startsWith('/uploads/')
+            ? `${BASE_URL}${post.profileImage}`
+            : `${BASE_URL}/profiles/${post.profileImage}`;
+          const postImageUrl = post.imageUrl?.replace('/uploads', '') 
+            ? `${BASE_URL}${post.imageUrl.replace('/uploads', '')}`
+            : null;
+          return (
+            <TouchableOpacity
+              key={post.postId}
+              style={styles.postCard}
+              onPress={() => navigation.navigate('BoardDetail', { postId: post.postId })}
+            >
+              <View style={styles.postRow}>
+                {post.imageUrl ? (
+                  <Image
+                    source={{ uri: postImageUrl }}
+                    style={styles.thumbnailImage}
+                  />
+                ) : (
+                  <View style={styles.thumbnailPlaceholder} />
+                )}
+                <View style={styles.postInfo}>
+                  <View style={styles.postHeader}>
+                    {post.profileImage ? (
+                      <Image
+                        source={{ uri: avatarUrl }}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <View style={styles.avatarPlaceholder} />
+                    )}
+                    <Text style={styles.userName}>{post.nickname}</Text>
+                  </View>
+                  <Text style={styles.postText}>{post.content}</Text>
                 </View>
-                <Text style={styles.postText}>{post.content}</Text>
+                <TouchableOpacity style={styles.likeIcon}>
+                  <Icon name="heart" size={20} color="#888" />
+                  <Text style={{ fontSize: 12, color: '#888' }}>{post.likeCount}</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.likeIcon}>
-                <Icon name="heart" size={20} color="#888" />
-                <Text style={{ fontSize: 12, color: '#888' }}>{post.likeCount}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
-      {/* Floating Write Button */}
+      {/* 글쓰기 버튼 */}
       <TouchableOpacity
         style={styles.floatingButton}
         onPress={() => navigation.navigate('BoardPost')}
@@ -210,6 +224,13 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: '#ccc',
+    marginRight: 8,
+  },
+  avatarImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    resizeMode: 'cover',
     marginRight: 8,
   },
   userName: {
