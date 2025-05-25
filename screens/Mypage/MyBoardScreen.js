@@ -56,7 +56,11 @@ const MyBoardScreen = () => {
           const imageUrl = post.imageUrl ? `${BASE_URL}${post.imageUrl.replace('/uploads', '')}` : null;
 
           return (
-            <View key={post.postId} style={styles.card}>
+            <TouchableOpacity
+              key={post.postId}
+              style={styles.card}
+              onPress={() => navigation.navigate('BoardDetail', { postId: post.postId })}
+            >
               {/* 이미지 썸네일 */}
               <View style={styles.thumbWrapper}>
                 {imageUrl ? (
@@ -70,17 +74,10 @@ const MyBoardScreen = () => {
               <Text style={styles.text} numberOfLines={2}>
                 {post.content}
               </Text>
-
-              {/* 연필 아이콘 */}
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate('BoardEdit', { postId: post.postId })}
-              >
-                <Icon name="edit-2" size={20} color="#888" />
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           );
         })}
+
       </ScrollView>
     </Container>
   );
