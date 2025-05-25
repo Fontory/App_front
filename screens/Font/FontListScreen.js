@@ -122,24 +122,11 @@ const FontListScreen = () => {
     return (
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() =>
+        onPress={() => {
           navigation.navigate('FontDetail', {
-            font: {
-              ...item,
-              liked: likes[item.fontId], // ✅ 최신 liked 상태 반영
-            },
-            onLikeToggle: (fontId, newLiked) => {
-              setLikes(prev => ({ ...prev, [fontId]: newLiked }));
-              setFontList(prev =>
-                prev.map(font =>
-                  font.fontId === fontId
-                    ? { ...font, likeCount: font.likeCount + (newLiked ? 1 : -1) }
-                    : font
-                )
-              );
-            }
-          })
-        }
+            fontId: item.fontId, // ✅ fontId만 넘김
+          });
+        }}
       >
         <View style={styles.card}>
           <View style={styles.header}>

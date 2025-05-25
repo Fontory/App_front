@@ -80,15 +80,7 @@ const MyFontScreen = () => {
             activeOpacity={0.8}
             onPress={() => {
               navigation.navigate('FontDetail', {
-                font: {
-                  ...font,
-                  fontName: font.fontName || font.name,
-                  creatorId: currentUser?.userId ?? '',
-                  creatorProfileImage: currentUser?.profileImage
-                    ? `profiles/${currentUser.profileImage}`
-                    : null,
-                  // ✅ 포함
-                }
+                fontId: font.fontId, // ✅ fontId만 넘김
               });
             }}
           >

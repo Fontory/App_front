@@ -83,19 +83,12 @@ const handleLikeToggle = async (fontId) => {
     return (
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() =>
+        onPress={() => {
           navigation.navigate('FontDetail', {
-            font: {
-              ...item,
-              liked: true,
-            },
-            onLikeToggle: (fontId, newLiked) => {
-              if (!newLiked) {
-                setLikedFonts(prev => prev.filter(f => f.fontId !== fontId));
-              }
-            }
-          })
-        }
+            fontId: item.fontId, // ✅ 올바른 변수명
+          });
+        }}
+
       >
         <View style={styles.card}>
           <View style={styles.header}>

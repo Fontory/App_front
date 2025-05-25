@@ -62,22 +62,11 @@ const DownloadedFontScreen = () => {
     return (
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() =>
-          navigation.navigate('FontDetail', {
-            font: {
-              ...item,
-              fontName: item.name, // ✅ 필드 이름 통일
-              creatorNickname: item.creatorNickname || '', // ✅ 안전하게 처리
-              creatorProfileImage: item.creatorProfileImage?.startsWith('/profiles/')
-                ? item.creatorProfileImage
-                : `/profiles/${item.creatorProfileImage}`,
-              liked: false,
-            },
-            onLikeToggle: () => {}, // ✅ 좋아요 없음 처리
-          })
-        }
-
-
+       onPress={() => {
+        navigation.navigate('FontDetail', {
+          fontId: item.fontId, // ✅ 올바른 변수명
+        });
+      }}
       >
         <View style={styles.card}>
           <View style={styles.header}>

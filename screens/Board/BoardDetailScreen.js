@@ -38,6 +38,7 @@ const BoardDetailScreen = () => {
       .then(res => {
         if (res.data.status === 0 || res.data.status === 200) {
           const postData = res.data.data;
+          console.log('📌 게시글 데이터:', postData);
           setPost(postData);
           setLikeCount(postData.likeCount);
         } else {
@@ -51,20 +52,20 @@ const BoardDetailScreen = () => {
       .finally(() => setLoading(false));
   }, [postId]);
 
-  useEffect(() => {
-    console.log('🎯 post.fontId:', post?.fontId);
-    if (post?.fontId) {
-      axios.get(`${BASE_URL}/fonts/api/${post.fontId}`)
-        .then(res => {
-          if (res.data.status === 0 || res.data.status === 200) {
-            setFont(res.data.data);
-          }
-        })
-        .catch(err => {
-          console.error('폰트 정보 조회 실패:', err.message);
-        });
-    }
-  }, [post]);
+useEffect(() => {
+  if (post?.fontId) {
+    axios.get(`${BASE_URL}/fonts/api/${post.fontId}`)
+      .then(res => {
+        console.log('📝 폰트 정보:', res.data);
+        setFont(res.data);  // ✅ 바로 set
+      })
+      .catch(err => {
+        console.error('폰트 정보 조회 실패:', err.message);
+      });
+  }
+}, [post]);
+
+
 
   const handleLike = async () => {
     try {
@@ -72,9 +73,10 @@ const BoardDetailScreen = () => {
         withCredentials: true,
       });
       console.log('✅ 좋아요 응답:', res.data);
+
       setLiked(prev => {
         const newLiked = !prev;
-        setLikeCount(prev ? likeCount - 1 : likeCount + 1);
+        setLikeCount(count => count + (newLiked ? 1 : -1));  // ✅ 최신 값 기준으로 수정
         return newLiked;
       });
     } catch (err) {
@@ -82,6 +84,7 @@ const BoardDetailScreen = () => {
       Alert.alert('오류', '좋아요 처리 중 오류가 발생했습니다.');
     }
   };
+
 
   if (loading) {
     return (
@@ -143,14 +146,19 @@ const BoardDetailScreen = () => {
         {font && (
           <TouchableOpacity
             style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}
-            onPress={() => navigation.navigate('FontDetail', { fontId: font.fontId })}
+            onPress={() => {
+              navigation.navigate('FontDetail', {
+                fontId: font.fontId, // ✅ 올바른 변수명
+              });
+            }}
           >
             <Text style={{ fontSize: 14, color: '#0051ff' }}>
-              이 글에 사용된 '{font.name}' 보러가기
+              이 글에 사용된 '{font.fontName}' 보러가기
             </Text>
             <Icon name="chevron-right" size={16} color="#0051ff" style={{ marginLeft: 4 }} />
           </TouchableOpacity>
         )}
+
       </ScrollView>
 
       {/* 전체 이미지 보기 모달 */}
