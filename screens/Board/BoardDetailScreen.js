@@ -52,8 +52,9 @@ const BoardDetailScreen = () => {
   }, [postId]);
 
   useEffect(() => {
+    console.log('🎯 post.fontId:', post?.fontId);
     if (post?.fontId) {
-      axios.get(`${BASE_URL}/api/fonts/${post.fontId}`)
+      axios.get(`${BASE_URL}/fonts/api/${post.fontId}`)
         .then(res => {
           if (res.data.status === 0 || res.data.status === 200) {
             setFont(res.data.data);

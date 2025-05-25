@@ -1,5 +1,4 @@
-// screens/Mypage/MyBoardScreen.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,55 +7,80 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import Container from '../Container';
+import axios from 'axios';
 
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const { width } = Dimensions.get('window');
 const CARD_HEIGHT = 100;
 const IMAGE_SIZE = CARD_HEIGHT - 16;
 
-const DUMMY_MY_POSTS = [
-  { id: '1', text: '오늘은 필사를 했다..', image: null },
-  { id: '2', text: '새로운 연습장을 완성했어요.', image: null },
-];
-
 const MyBoardScreen = () => {
   const navigation = useNavigation();
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${BASE_URL}/api/mypage/posts`, { withCredentials: true })
+      .then(res => {
+        if (res.data.status === 0 || res.data.status === 200) {
+          setPosts(res.data.data);
+        } else {
+          console.warn('⚠️ 게시글 조회 실패:', res.data.message);
+        }
+      })
+      .catch(err => {
+        console.error('❌ 게시글 요청 실패:', err.message);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <Container title="My Board" hideBackButton={false} showBottomBar={true}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#000" />
+        </View>
+      </Container>
+    );
+  }
 
   return (
-    <Container
-      title="My Board"
-      hideBackButton={false}
-      showBottomBar={true}
-    >
+    <Container title="My Board" hideBackButton={false} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        {DUMMY_MY_POSTS.map((post) => (
-          <View key={post.id} style={styles.card}>
-            {/* 이미지 썸네일 */}
-            <View style={styles.thumbWrapper}>
-              {post.image ? (
-                <Image source={post.image} style={styles.thumb} />
-              ) : (
-                <View style={styles.thumbPlaceholder} />
-              )}
+        {posts.map((post) => {
+          const imageUrl = post.imageUrl ? `${BASE_URL}${post.imageUrl.replace('/uploads', '')}` : null;
+
+          return (
+            <View key={post.postId} style={styles.card}>
+              {/* 이미지 썸네일 */}
+              <View style={styles.thumbWrapper}>
+                {imageUrl ? (
+                  <Image source={{ uri: encodeURI(imageUrl) }} style={styles.thumb} />
+                ) : (
+                  <View style={styles.thumbPlaceholder} />
+                )}
+              </View>
+
+              {/* 본문 텍스트 */}
+              <Text style={styles.text} numberOfLines={2}>
+                {post.content}
+              </Text>
+
+              {/* 연필 아이콘 */}
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate('BoardEdit', { postId: post.postId })}
+              >
+                <Icon name="edit-2" size={20} color="#888" />
+              </TouchableOpacity>
             </View>
-
-            {/* 본문 텍스트 */}
-            <Text style={styles.text} numberOfLines={2}>
-              {post.text}
-            </Text>
-
-            {/* 연필 아이콘 (편집) */}
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => navigation.navigate('BoardEdit')}
-            >
-              <Icon name="edit-2" size={20} color="#888" />
-            </TouchableOpacity>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </Container>
   );
@@ -65,7 +89,7 @@ const MyBoardScreen = () => {
 const styles = StyleSheet.create({
   scroll: {
     padding: 16,
-    paddingBottom: 32 + 56 + 16, // 탭바 + 여유
+    paddingBottom: 32 + 56 + 16,
   },
   card: {
     flexDirection: 'row',

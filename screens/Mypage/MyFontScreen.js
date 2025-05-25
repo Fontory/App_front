@@ -71,7 +71,7 @@ const MyFontScreen = () => {
   }
 
   return (
-    <Container title="My Font" hideBackButton showBottomBar>
+    <Container title="My Font" hideBackButton={false} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.scroll}>
         {fonts.map((font) => (
           <TouchableOpacity

@@ -10,6 +10,8 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
 import Container from '../Container';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
@@ -21,37 +23,40 @@ const BoardScreen = ({ navigation }) => {
   const truncate = (text, limit) =>
     text.length > limit ? text.substring(0, limit) + '...' : text;
 
-  useEffect(() => {
-    // 명언 불러오기
-    axios.get(`${BASE_URL}/quotes/today`)
-      .then(res => {
-        console.log('📥 명언 응답:', res.data);
-        setQuote(res.data.content || '오늘의 명언이 없습니다.');
-      })
-      .catch(err => {
-        console.error('명언 가져오기 실패:', err);
-        setQuote('오늘의 명언이 없습니다.');
-      });
+  useFocusEffect(
+    useCallback(() => {
+      // 명언 불러오기
+      axios.get(`${BASE_URL}/quotes/today`)
+        .then(res => {
+          console.log('📥 명언 응답:', res.data);
+          setQuote(res.data.content || '오늘의 명언이 없습니다.');
+        })
+        .catch(err => {
+          console.error('명언 가져오기 실패:', err);
+          setQuote('오늘의 명언이 없습니다.');
+        });
 
-    // 게시글 불러오기
-    axios.get(`${BASE_URL}/api/posts?sort=latest`)
-      .then(res => {
-        console.log('📥 게시글 응답:', res.data);
-        if ((res.data.status === 0 || res.data.status === 200) && Array.isArray(res.data.data.posts)) {
-          setPosts(res.data.data.posts);
-        } else {
-          console.warn('⚠️ 게시글 상태값 이상:', res.data.message);
-        }
-      })
-      .catch(err => {
-        console.error('❌ 게시글 호출 에러:', err.message);
-        if (err.response) {
-          console.log('📤 서버 응답:', err.response.status, err.response.data);
-        } else {
-          console.log('❌ 서버 응답 없음 (Network Error)');
-        }
-      });
-  }, []);
+      // 게시글 불러오기
+      axios.get(`${BASE_URL}/api/posts?sort=latest`)
+        .then(res => {
+          console.log('📥 게시글 응답:', res.data);
+          if ((res.data.status === 0 || res.data.status === 200) && Array.isArray(res.data.data.posts)) {
+            setPosts(res.data.data.posts);
+          } else {
+            console.warn('⚠️ 게시글 상태값 이상:', res.data.message);
+          }
+        })
+        .catch(err => {
+          console.error('❌ 게시글 호출 에러:', err.message);
+          if (err.response) {
+            console.log('📤 서버 응답:', err.response.status, err.response.data);
+          } else {
+            console.log('❌ 서버 응답 없음 (Network Error)');
+          }
+        });
+    }, [])
+  );
+
 
   const filteredPosts = filterType === 'ALL'
     ? posts
