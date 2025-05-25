@@ -67,9 +67,27 @@ const MyPageScreen = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
+  const checkLogin = async () => {
+    const userStr = await AsyncStorage.getItem('user');
+    if (!userStr) {
+      Alert.alert('알림', '로그인이 필요합니다.', [
+        {
+          text: '확인',
+          onPress: () => navigation.navigate('Login'),
+        },
+      ]);
+      setLoading(false); // 로딩 스피너 멈춤
+      return;
+    }
+
+    // 로그인된 상태라면 프로필 데이터 fetch
     fetchProfileAndBadges();
-  }, []);
+  };
+
+  checkLogin();
+}, []);
+
 
   if (loading) {
     return (
