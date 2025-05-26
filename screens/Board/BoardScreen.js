@@ -57,7 +57,6 @@ const BoardScreen = ({ navigation }) => {
     }, [])
   );
 
-
   const filteredPosts = filterType === 'ALL'
     ? posts
     : posts.filter(post => post.postType === 'TRANSCRIPTION');
@@ -89,9 +88,11 @@ const BoardScreen = ({ navigation }) => {
 
         {/* 게시글 목록 */}
         {filteredPosts.map(post => {
-          const avatarUrl = post.profileImage.startsWith('/uploads/')
-            ? `${BASE_URL}${post.profileImage}`
-            : `${BASE_URL}/profiles/${post.profileImage}`;
+          const avatarUrl = post.profileImage
+            ? post.profileImage.startsWith('/')
+              ? `${BASE_URL}${post.profileImage.replace('/uploads', '')}`
+              : `${BASE_URL}/profiles/${post.profileImage}`
+            : null;
           const postImageUrl = post.imageUrl?.replace('/uploads', '') 
             ? `${BASE_URL}${post.imageUrl.replace('/uploads', '')}`
             : null;

@@ -56,7 +56,9 @@ const MyProfileScreen = ({ navigation }) => {
       const payload = {
         nickname,
         email,
-        profileImage, // 현재 이미지 수정은 안 되므로 그대로 전달
+        profileImage,
+        name,
+        phone
       };
 
       const res = await fetch(`${BASE_URL}/api/mypage/profile`, {
@@ -101,7 +103,7 @@ const MyProfileScreen = ({ navigation }) => {
             source={
               imageLoadError || !profileImage
                 ? require('../../assets/profile.png')
-                : { uri: `${BASE_URL}${profileImage.replace('/uploads/profile/', '/uploads/profiles/')}` }
+                : { uri: `${BASE_URL}${profileImage.replace('/uploads', '')}` }
             }
             style={styles.avatarPlaceholder}
             onError={(e) => {
