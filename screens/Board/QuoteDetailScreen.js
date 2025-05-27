@@ -36,7 +36,7 @@ const QuoteDetailScreen = ({ navigation }) => {
   const [quoteText, setQuoteText] = useState('');
   const [previewText, setPreviewText] = useState('');
   const [fontSize, setFontSize] = useState(16);
-  const [userFonts, setUserFonts] = useState([DEFAULT_FONTS]);
+  const [userFonts, setUserFonts] = useState(DEFAULT_FONTS);
   const [fontId, setFontId] = useState(null);
   const [fontFamily, setFontFamily] = useState('');
   const [loading, setLoading] = useState(true);

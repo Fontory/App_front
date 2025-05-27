@@ -19,7 +19,7 @@ import axios from 'axios';
 const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const { width } = Dimensions.get('window');
 const IMAGE_WIDTH = width - 32;
-const IMAGE_HEIGHT = IMAGE_WIDTH * 1.2;
+const IMAGE_HEIGHT = IMAGE_WIDTH;
 
 const IMAGES = [
   require('../../assets/notebook1.jpg'),
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   createButton: {
-    backgroundColor: '#3cb371',
+    backgroundColor: '#000',
     borderRadius: 30,
     paddingHorizontal: 32,
     paddingVertical: 14,
