@@ -117,8 +117,6 @@ const MyProfileScreen = ({ navigation }) => {
               setImageLoadError(true);
             }}
           />
-
-
           <TouchableOpacity style={styles.avatarEditButton} onPress={handleAvatarPress}>
             <Icon name="camera" size={20} color="#fff" />
           </TouchableOpacity>
