@@ -104,7 +104,6 @@ useEffect(() => {
 
   const avatarUrl = post?.profileImage?.startsWith('/uploads/')
     ? `${BASE_URL}${post.profileImage.replace('/uploads', '')}`
-
     : `${BASE_URL}/profiles/${post.profileImage}`;
 
   return (

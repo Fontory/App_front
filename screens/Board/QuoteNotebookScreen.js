@@ -33,7 +33,7 @@ const QuoteNotebookScreen = ({ navigation }) => {
   }, []);
 
   const route = useRoute();
-  const { previewText, fontSize, fontFamily } = route.params;
+  const { previewText, fontSize, fontFamily, fontId } = route.params;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const len = IMAGES.length;
@@ -54,6 +54,7 @@ const QuoteNotebookScreen = ({ navigation }) => {
       previewText,
       fontSize,
       fontFamily,
+      fontId,
       selectedImage: IMAGES[currentIndex],
     });
   };

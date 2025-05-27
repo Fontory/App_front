@@ -1,5 +1,5 @@
 // screens/Mypage/MyNoteBookScreen.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,21 +7,34 @@ import {
   TouchableOpacity,
   Dimensions,
   ScrollView,
+  Image,
+  Alert,
 } from 'react-native';
 import Container from '../Container';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
-// 카드 사이 여백 16*3 = 48을 제외한 실 셀 너비
 const CARD_SIZE = (width - 48) / 2;
-
-const DUMMY_NOTEBOOKS = [
-  { id: '1', font: '맑은고딕체', image: null },
-  { id: '2', font: '맑은고딕체', image: null },
-  { id: '3', font: '맑은고딕체', image: null },
-  { id: '4', font: '맑은고딕체', image: null },
-];
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 
 const MyNoteBookScreen = () => {
+  const [notebooks, setNotebooks] = useState([]);
+
+  useEffect(() => {
+    axios.get(`${BASE_URL}/api/mypage/practices`)
+      .then((res) => {
+        if (res.data.status === 0 || res.data.status === 200) {
+          setNotebooks(res.data.data);
+        } else {
+          Alert.alert('불러오기 실패', res.data.message);
+        }
+      })
+      .catch((err) => {
+        console.error('❌ 연습장 조회 오류:', err.message);
+        Alert.alert('에러', '연습장 데이터를 불러오지 못했습니다.');
+      });
+  }, []);
+
   return (
     <Container
       title="My NoteBook"
@@ -32,22 +45,26 @@ const MyNoteBookScreen = () => {
         contentContainerStyle={styles.grid}
         showsVerticalScrollIndicator={false}
       >
-        {DUMMY_NOTEBOOKS.map((nb) => (
+        {notebooks.map((nb) => (
           <TouchableOpacity
-            key={nb.id}
+            key={nb.sheetId}
             style={styles.card}
             activeOpacity={0.8}
             onPress={() => {
-              /* TODO: 상세보기로 네비게이트 */
+              // TODO: 상세 페이지 네비게이션
             }}
           >
-            {/* 상단 라벨 */}
             <View style={styles.labelWrapper}>
-              <Text style={styles.labelText}>{`'${nb.font}' 사용`}</Text>
+              <Text style={styles.labelText}>{nb.phrase || '필사 문구 없음'}</Text>
             </View>
-
-            {/* 이미지 영역 */}
-            <View style={styles.imagePlaceholder} />
+            <View style={styles.imagePlaceholder}>
+              {nb.imageUrl && (
+                <Image
+                  source={{ uri: `${BASE_URL}${nb.imageUrl}` }}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              )}
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -60,12 +77,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: 16,
-    paddingBottom: 32 + 56 + 16, // 탭바 + 여유
+    paddingBottom: 32 + 56 + 16,
     justifyContent: 'space-between',
   },
   card: {
     width: CARD_SIZE,
-    height: CARD_SIZE + 24, // 라벨 높이(24) + 이미지 영역
+    height: CARD_SIZE + 24,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#eee',

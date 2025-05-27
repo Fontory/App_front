@@ -16,14 +16,10 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import Container from '../Container';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const FONT_SIZES = [12, 14, 16, 18, 20, 24];
-const FONT_FAMILIES = Platform.select({
-  ios: ['System', 'Courier New', 'Georgia'],
-  android: ['sans-serif', 'serif', 'monospace'],
-});
-
 const { width } = Dimensions.get('window');
 const PICKER_WIDTH = (width - 48) / 2;
 
@@ -31,11 +27,18 @@ const QuoteDetailScreen = ({ navigation }) => {
   if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
+  const DEFAULT_FONTS = [
+    { fontId: 'default-sans', fontName: 'sans-serif' },
+    { fontId: 'default-serif', fontName: 'serif' },
+    { fontId: 'default-mono', fontName: 'monospace' },
+  ];
 
   const [quoteText, setQuoteText] = useState('');
   const [previewText, setPreviewText] = useState('');
   const [fontSize, setFontSize] = useState(16);
-  const [fontFamily, setFontFamily] = useState(FONT_FAMILIES[0]);
+  const [userFonts, setUserFonts] = useState([DEFAULT_FONTS]);
+  const [fontId, setFontId] = useState(null);
+  const [fontFamily, setFontFamily] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,12 +61,42 @@ const QuoteDetailScreen = ({ navigation }) => {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const fetchUserFonts = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem('user');
+        if (!userStr) {
+          Alert.alert('로그인이 필요합니다.');
+          return;
+        }
+
+        const user = JSON.parse(userStr);
+        const userId = user.userId;
+
+        const res = await axios.get(`${BASE_URL}/api/mypage/fonts/downloads?userId=${userId}`);
+        if (res.data.status === 0 || res.data.status === 200) {
+          const mergedFonts = [...DEFAULT_FONTS, ...res.data.data];
+          setUserFonts(mergedFonts);
+          const firstFont = mergedFonts[0];
+          setFontId(firstFont.fontId);
+          setFontFamily(firstFont.fontName);
+        }
+      } catch (err) {
+        console.error('사용자 폰트 불러오기 실패:', err);
+        Alert.alert('오류', '다운로드한 폰트를 불러오는 중 문제가 발생했습니다.');
+      }
+    };
+
+    fetchUserFonts();
+  }, []);
+
   const goNext = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     navigation.navigate('QuoteNotebook', {
       previewText,
       fontSize,
       fontFamily,
+      fontId,
     });
   };
 
@@ -105,14 +138,22 @@ const QuoteDetailScreen = ({ navigation }) => {
           <View style={[styles.pickerWrapper, { width: PICKER_WIDTH }]}>
             <Text style={styles.pickerLabel}>글씨체</Text>
             <Picker
-              selectedValue={fontFamily}
-              onValueChange={setFontFamily}
+              selectedValue={fontId}
+              onValueChange={(val) => {
+                const selected = userFonts.find(f => f.fontId === val);
+                setFontId(val);
+                setFontFamily(selected?.fontName || '');
+              }}
               mode="dropdown"
-              itemStyle={{ fontSize: 14, height: 48 }}
               style={styles.picker}
             >
-              {FONT_FAMILIES.map(family => (
-                <Picker.Item key={family} label={family} value={family} color="#000" />
+              {userFonts.map(font => (
+                <Picker.Item
+                  key={font.fontId}
+                  label={font.fontName}
+                  value={font.fontId}
+                  color="#000"
+                />
               ))}
             </Picker>
           </View>
@@ -160,11 +201,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     marginBottom: 8,
-    textAlign: 'center',
-  },
-  quoteAuthor: {
-    fontSize: 12,
-    color: '#666',
     textAlign: 'center',
   },
   pickerRow: {
