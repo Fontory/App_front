@@ -102,9 +102,11 @@ useEffect(() => {
     ? `${BASE_URL}${post.imageUrl.replace('/uploads', '')}`
     : null;
 
-  const avatarUrl = post?.profileImage?.startsWith('/uploads/')
-    ? `${BASE_URL}${post.profileImage.replace('/uploads', '')}`
-    : `${BASE_URL}/profiles/${post.profileImage}`;
+  const avatarUrl = post?.profileImage
+    ? post.profileImage.startsWith('/')
+      ? `${BASE_URL}${post.profileImage.replace('/uploads', '')}`
+      : `${BASE_URL}/profiles/${post.profileImage}`
+    : null;
 
   return (
     <Container title="Post Detail" hideBackButton={false} showBottomBar={true}>
