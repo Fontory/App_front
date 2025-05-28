@@ -1,27 +1,60 @@
-// screens/Font/FontDownloadScreen.js
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Image,
-  Modal,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 import RNFS from 'react-native-fs';
-import Share from 'react-native-share';
-import Container from '../Container'; // 경로는 실제 구조에 맞게 조정
+import Container from '../Container';
 
-const FontDownloadScreen = ({ route, navigation }) => {
-  const { fontName } = route.params;
+const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
+
+const FontDownloadScreen = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const {
+    fontName,
+    fontId,
+    vectorSimilarity,
+    otfUrl,
+    ttfUrl,
+    cellImagesPath
+  } = route.params;
+
+  const [previewImage, setPreviewImage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRating, setSelectedRating] = useState(null);
   const [downloadExt, setDownloadExt] = useState(null);
 
+  useEffect(() => {
+    const trimmedTtfFilename = ttfUrl?.replace(/^\/?.?fonts\//, '');
+    const fetchPreviewImage = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/fonts/${fontId}/render`, {
+          params: {
+            text: `하늘은 오늘도 맑고 푸르다.\n내 마음엔 바람이 분다.\n긴 시간을 지나 여기까지 왔다.\n글자는 나의 이야기를 품고\n너에게 닿기를 바란다.\n손끝에 남은 감정들을 모아\n하나하나 정성껏 써 내려간다.\n지워지지 않는 기억처럼\n이 글도 너의 마음에 남기를.\n오늘도, 그리고 내일도\n나는 너를 생각하며 글을 쓴다.`,
+            size: 35,
+            ttf: trimmedTtfFilename,
+          },
+          responseType: 'blob',
+        });
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result;
+          if (typeof result === 'string') {
+            setPreviewImage(result);
+          }
+        };
+        reader.readAsDataURL(res.data);
+      } catch (error) {
+        console.error('❌ 미리보기 이미지 요청 실패:', error);
+      }
+    };
+    fetchPreviewImage();
+  }, [fontId]);
+
   const handleDownload = (ext) => {
     setDownloadExt(ext);
-    setModalVisible(true); // 별점 모달 열기
+    setModalVisible(true);
   };
 
   const handleConfirmRating = async () => {
@@ -31,39 +64,62 @@ const FontDownloadScreen = ({ route, navigation }) => {
     }
 
     try {
+      // ⭐️ 별점 제출 API 호출
+      const ratingRes = await axios.post(
+        `${BASE_URL}/fonts/${fontId}/rating`,
+        { rating: selectedRating },
+        { withCredentials: true } // ✅ 세션 기반 인증용
+      );
+
+      if (ratingRes.data.status !== 'success') {
+        throw new Error(ratingRes.data.message || '별점 등록 실패');
+      }
+
+      // ✅ 폰트 다운로드
       const fileName = `${fontName}.${downloadExt}`;
       const destPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+      const downloadRes = await RNFS.downloadFile({
+        fromUrl: `${BASE_URL}/fonts/딸에게 엄마가.ttf`, // 나중에 fromUrl: `${BASE_URL}/fonts/${fileName}`로 수정
+        toFile: destPath,
+      }).promise;
 
-      await RNFS.copyFileAssets('samplefont.ttf', destPath); // 샘플 파일
-      Alert.alert('✅ 다운로드 완료', `${fileName} 이 저장되었습니다.`);
+      if (downloadRes.statusCode === 200) {
+        Alert.alert('✅ 다운로드 완료', `${fileName} 이 저장되었습니다.`);
+      } else {
+        throw new Error(`다운로드 실패: status ${downloadRes.statusCode}`);
+      }
+
       setModalVisible(false);
       navigation.navigate('Home');
-
     } catch (err) {
       console.error('❌ 오류:', err);
-      Alert.alert('다운로드 실패', '평가 전송 또는 저장에 실패했어요.');
+      Alert.alert('다운로드 실패', err.message || '별점 제출 또는 저장 중 문제가 발생했습니다.');
     }
   };
 
-  const renderStars = () => {
-    return [1, 2, 3, 4, 5].map(num => (
-      <TouchableOpacity key={num} onPress={() => setSelectedRating(num)}>
-        <Text style={styles.star}>{selectedRating >= num ? '⭐' : '☆'}</Text>
-      </TouchableOpacity>
-    ));
-  };
+
+
+  const renderStars = () => [1, 2, 3, 4, 5].map(num => (
+    <TouchableOpacity key={num} onPress={() => setSelectedRating(num)}>
+      <Text style={styles.star}>{selectedRating >= num ? '⭐' : '☆'}</Text>
+    </TouchableOpacity>
+  ));
 
   return (
-    <Container title="폰트 다운로드" showBottomBar={true} hideBackButton={false}>
-      <View style={styles.container}>
+    <Container title="" showBottomBar={true} hideBackButton={true}>
+      <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>폰트 생성 완료!</Text>
         <Text style={styles.fontName}>{fontName}.ttf</Text>
 
-        <Image
-          source={require('../../assets/samplefont.png')}
-          style={styles.previewImage}
-          resizeMode="contain"
-        />
+        <View style={styles.previewBox}>
+          {previewImage ? (
+            <Image source={{ uri: previewImage }} style={styles.previewImage} resizeMode="contain" />
+          ) : (
+            <Text style={styles.previewPlaceholder}>미리보기 이미지를 불러오는 중...</Text>
+          )}
+        </View>
+
+        <Text style={styles.accuracyText}>정확도: {(vectorSimilarity * 100).toFixed(1)}%</Text>
 
         <TouchableOpacity style={styles.downloadBtn} onPress={() => handleDownload('ttf')}>
           <Text style={styles.btnText}>TTF로 다운받기</Text>
@@ -77,7 +133,6 @@ const FontDownloadScreen = ({ route, navigation }) => {
           <Text style={[styles.btnText, { color: '#000' }]}>나중에 받을게요</Text>
         </TouchableOpacity>
 
-        {/* 별점 평가 모달 */}
         <Modal visible={modalVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
@@ -96,7 +151,7 @@ const FontDownloadScreen = ({ route, navigation }) => {
             </View>
           </View>
         </Modal>
-      </View>
+      </ScrollView>
     </Container>
   );
 };
@@ -105,27 +160,44 @@ export default FontDownloadScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 24,
-    alignItems: 'center',
     backgroundColor: '#fff',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 24,
+    color: '#333',
   },
   fontName: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 5,
+  },
+  previewBox: {
+    width: '100%',
+    borderRadius: 12,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 10,
   },
   previewImage: {
     width: '100%',
-    height: 160,
-    marginBottom: 24,
+    aspectRatio: 1,
     borderRadius: 8,
-    backgroundColor: '#f2f2f2',
+  },
+  previewPlaceholder: {
+    fontSize: 16,
+    color: '#aaa',
+  },
+  accuracyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#007aff',
+    marginBottom: 24,
   },
   downloadBtn: {
     backgroundColor: '#000',

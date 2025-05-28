@@ -48,7 +48,6 @@ const LoginScreen = ({ navigation }) => {
       }
 
       await AsyncStorage.setItem('user', JSON.stringify(res.data.user));
-      Alert.alert('로그인 성공!');
       navigation.replace('Home');
 
     } catch (err) {

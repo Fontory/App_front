@@ -1,8 +1,8 @@
-// App.tsx
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 
 // screens import
 import WelcomeScreen from './screens/WelcomeScreen';
@@ -34,6 +34,8 @@ import FontListScreen from './screens/Font/FontListScreen';
 import FontDetailScreen from './screens/Font/FontDetailScreen';
 import ExerciseBookScreen from './screens/ExerciseBook/ExerciseBookScreen';
 import ExerciseBook2Screen from './screens/ExerciseBook/ExerciseBook2Screen';
+import FontNamingScreen from './screens/Font/FontNamingScreen';
+import FontResultScreen from './screens/Font/FontResultScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -60,7 +62,6 @@ export type RootStackParamList = {
   MyNoteBook: undefined;
   Home: undefined;
   FontGeneration: { imageUri: string };
-  FontDownload: { fontName: string };
   FontList: undefined;
   FontDetail: { font: any };
   ExerciseBook: { fontName: string };
@@ -69,47 +70,68 @@ export type RootStackParamList = {
     fontName: string;
     quote: string;
   };
+  FontNaming: { imageUri: string };
+  FontResult: {
+    fontName: string;
+    fontId: number;
+    otfUrl: string;
+    ttfUrl: string;
+    vectorSimilarity: number;
+    cellImagesPath: string;
+  };
+  FontDownload: {
+    fontName: string;
+    cellImagesPath: string;
+    fontId: number;
+    otfUrl: string;
+    ttfUrl: string;
+    vectorSimilarity: number;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const App = () => (
-  <NavigationContainer>
-    <Stack.Navigator
-      initialRouteName="Welcome"
-      screenOptions={{ headerShown: false }}
-    >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
-      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-      <Stack.Screen name="Privacy" component={PrivacyScreen} />
-      <Stack.Screen name="Board" component={BoardScreen} />
-      <Stack.Screen name="QuoteDetail" component={QuoteDetailScreen} />
-      <Stack.Screen name="QuoteNotebook" component={QuoteNotebookScreen} />
-      <Stack.Screen name="QuoteComplete" component={QuoteCompleteScreen} />
-      <Stack.Screen name="BoardPost" component={BoardPostScreen} />
-      <Stack.Screen name="BoardDetail" component={BoardDetailScreen} />
-      <Stack.Screen name="OtherProfile" component={OtherProfileScreen} />
-      <Stack.Screen name="MyPage" component={MyPageScreen} />
-      <Stack.Screen name="MyProfile" component={MyProfileScreen} />
-      <Stack.Screen name="LevelInfo" component={LevelInfoScreen} />
-      <Stack.Screen name="MyFont" component={MyFontScreen} />
-      <Stack.Screen name="BoardEdit" component={BoardEditScreen} />
-      <Stack.Screen name="SaveFont" component={SaveFontScreen} />
-      <Stack.Screen name="LikeFont" component={LikeFontScreen} />
-      <Stack.Screen name="MyBoard" component={MyBoardScreen} />
-      <Stack.Screen name="MyNoteBook" component={MyNoteBookScreen} />
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="FontGeneration" component={FontGenerationScreen} />
-      <Stack.Screen name="FontDownload" component={FontDownloadScreen} />
-      <Stack.Screen name="FontList" component={FontListScreen} />
-      <Stack.Screen name="FontDetail" component={FontDetailScreen} />
-      <Stack.Screen name="ExerciseBook" component={ExerciseBookScreen} />
-      <Stack.Screen name="ExerciseBook2" component={ExerciseBook2Screen} />
-    </Stack.Navigator>
-  </NavigationContainer>
-);
+const App = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Welcome"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        <Stack.Screen name="Privacy" component={PrivacyScreen} />
+        <Stack.Screen name="Board" component={BoardScreen} />
+        <Stack.Screen name="QuoteDetail" component={QuoteDetailScreen} />
+        <Stack.Screen name="QuoteNotebook" component={QuoteNotebookScreen} />
+        <Stack.Screen name="QuoteComplete" component={QuoteCompleteScreen} />
+        <Stack.Screen name="BoardPost" component={BoardPostScreen} />
+        <Stack.Screen name="BoardDetail" component={BoardDetailScreen} />
+        <Stack.Screen name="OtherProfile" component={OtherProfileScreen} />
+        <Stack.Screen name="MyPage" component={MyPageScreen} />
+        <Stack.Screen name="MyProfile" component={MyProfileScreen} />
+        <Stack.Screen name="LevelInfo" component={LevelInfoScreen} />
+        <Stack.Screen name="MyFont" component={MyFontScreen} />
+        <Stack.Screen name="BoardEdit" component={BoardEditScreen} />
+        <Stack.Screen name="SaveFont" component={SaveFontScreen} />
+        <Stack.Screen name="LikeFont" component={LikeFontScreen} />
+        <Stack.Screen name="MyBoard" component={MyBoardScreen} />
+        <Stack.Screen name="MyNoteBook" component={MyNoteBookScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="FontGeneration" component={FontGenerationScreen} />
+        <Stack.Screen name="FontDownload" component={FontDownloadScreen} />
+        <Stack.Screen name="FontList" component={FontListScreen} />
+        <Stack.Screen name="FontDetail" component={FontDetailScreen} />
+        <Stack.Screen name="ExerciseBook" component={ExerciseBookScreen} />
+        <Stack.Screen name="ExerciseBook2" component={ExerciseBook2Screen} />
+        <Stack.Screen name="FontNaming" component={FontNamingScreen} />
+        <Stack.Screen name="FontResult" component={FontResultScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
 
 export default App;
