@@ -9,94 +9,64 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
-  Dimensions,
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import axios from 'axios';
 import Container from '../Container';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
-const FONT_SIZES = [12, 14, 16, 18, 20, 24];
-const { width } = Dimensions.get('window');
-const PICKER_WIDTH = (width - 48) / 2;
 
 const QuoteDetailScreen = ({ navigation }) => {
   if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
-  const DEFAULT_FONTS = [
-    { fontId: 'default-sans', fontName: 'sans-serif' },
-    { fontId: 'default-serif', fontName: 'serif' },
-    { fontId: 'default-mono', fontName: 'monospace' },
-  ];
 
   const [quoteText, setQuoteText] = useState('');
   const [previewText, setPreviewText] = useState('');
-  const [fontSize, setFontSize] = useState(16);
-  const [userFonts, setUserFonts] = useState(DEFAULT_FONTS);
-  const [fontId, setFontId] = useState(null);
-  const [fontFamily, setFontFamily] = useState('');
+  const [fontList, setFontList] = useState([]);
+  const [selectedFontId, setSelectedFontId] = useState(null);
+  const [selectedFontName, setSelectedFontName] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`${BASE_URL}/quotes/today`)
-      .then(res => {
-        if (res.data?.content) {
-          setQuoteText(res.data.content);
-          setPreviewText(res.data.content);
-        } else {
-          setQuoteText('오늘의 명언이 없습니다.');
-          setPreviewText('오늘의 명언이 없습니다.');
-        }
-      })
-      .catch(err => {
-        console.error('명언 불러오기 실패:', err);
-        setQuoteText('명언을 불러오는 중 오류가 발생했습니다.');
-        setPreviewText('명언을 불러오는 중 오류가 발생했습니다.');
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    const fetchUserFonts = async () => {
+    const fetchQuoteAndFonts = async () => {
       try {
-        const userStr = await AsyncStorage.getItem('user');
-        if (!userStr) {
-          Alert.alert('로그인이 필요합니다.');
-          return;
+        const [quoteRes, fontsRes] = await Promise.all([
+          fetch(`${BASE_URL}/quotes/today`),
+          fetch(`${BASE_URL}/fonts`)
+        ]);
+
+        const quoteJson = await quoteRes.json();
+        const fontsJson = await fontsRes.json();
+
+        setQuoteText(quoteJson?.content || '오늘의 명언이 없습니다.');
+        setPreviewText(quoteJson?.content || '오늘의 명언이 없습니다.');
+        setFontList(fontsJson || []);
+
+        // 기본 선택값 설정
+        if (fontsJson.length > 0) {
+          setSelectedFontId(fontsJson[0].fontId);
+          setSelectedFontName(fontsJson[0].fontName);
         }
 
-        const user = JSON.parse(userStr);
-        const userId = user.userId;
-
-        const res = await axios.get(`${BASE_URL}/api/mypage/fonts/downloads?userId=${userId}`);
-        if (res.data.status === 0 || res.data.status === 200) {
-          const mergedFonts = [...DEFAULT_FONTS, ...res.data.data];
-          setUserFonts(mergedFonts);
-          const firstFont = mergedFonts[0];
-          setFontId(firstFont.fontId);
-          setFontFamily(firstFont.fontName);
-        }
       } catch (err) {
-        console.error('사용자 폰트 불러오기 실패:', err);
-        Alert.alert('오류', '다운로드한 폰트를 불러오는 중 문제가 발생했습니다.');
+        console.error('데이터 로딩 실패:', err);
+        Alert.alert('오류', '명언 또는 폰트를 불러오는 중 문제가 발생했습니다.');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserFonts();
+    fetchQuoteAndFonts();
   }, []);
 
   const goNext = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    navigation.navigate('QuoteNotebook', {
-      previewText,
-      fontSize,
-      fontFamily,
-      fontId,
+    navigation.navigate('ExerciseBook', {
+      quote: previewText,
+      fontId: selectedFontId,
+      fontName: selectedFontName,
     });
   };
 
@@ -113,70 +83,47 @@ const QuoteDetailScreen = ({ navigation }) => {
   return (
     <Container title="Quote Of The Day" hideBackButton={false} showBottomBar={true}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* 1) 서버에서 받아온 quoteCard */}
+        {/* 명언 카드 */}
         <View style={styles.quoteCard}>
           <Text style={styles.quoteText}>{quoteText}</Text>
         </View>
 
-        {/* 2) 크기 & 글씨체 선택 */}
-        <View style={styles.pickerRow}>
-          <View style={[styles.pickerWrapper, { width: PICKER_WIDTH }]}>
-            <Text style={styles.pickerLabel}>크기</Text>
-            <Picker
-              selectedValue={fontSize}
-              onValueChange={setFontSize}
-              mode="dropdown"
-              itemStyle={{ fontSize: 14, height: 48 }}
-              style={styles.picker}
-            >
-              {FONT_SIZES.map(size => (
-                <Picker.Item key={size} label={`${size} pt`} value={size} color="#000" />
-              ))}
-            </Picker>
-          </View>
-
-          <View style={[styles.pickerWrapper, { width: PICKER_WIDTH }]}>
-            <Text style={styles.pickerLabel}>글씨체</Text>
-            <Picker
-              selectedValue={fontId}
-              onValueChange={(val) => {
-                const selected = userFonts.find(f => f.fontId === val);
-                setFontId(val);
-                setFontFamily(selected?.fontName || '');
-              }}
-              mode="dropdown"
-              style={styles.picker}
-            >
-              {userFonts.map(font => (
-                <Picker.Item
-                  key={font.fontId}
-                  label={font.fontName}
-                  value={font.fontId}
-                  color="#000"
-                />
-              ))}
-            </Picker>
-          </View>
-        </View>
-
-        {/* 3) preview 영역 */}
+        {/* 글귀 입력 */}
         <View style={styles.previewCard}>
           <TextInput
-            style={[
-              styles.previewText,
-              {
-                fontSize,
-                fontFamily,
-                textAlignVertical: 'top',
-              },
-            ]}
+            style={styles.previewText}
             value={previewText}
             onChangeText={setPreviewText}
             multiline
           />
         </View>
 
-        {/* 4) 다음 버튼 */}
+        {/* 폰트 선택 (드롭다운) */}
+        <View style={styles.fontSelector}>
+          <Text style={styles.fontSelectorLabel}>폰트 선택</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={selectedFontId}
+              onValueChange={(itemValue, itemIndex) => {
+                const selectedFont = fontList.find(f => f.fontId === itemValue);
+                setSelectedFontId(itemValue);
+                setSelectedFontName(selectedFont?.fontName || '');
+              }}
+              style={styles.picker}
+              dropdownIconColor="#000"
+            >
+              {fontList.map((font) => (
+                <Picker.Item
+                  key={font.fontId}
+                  label={font.fontName}
+                  value={font.fontId}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
+        {/* 다음 버튼 */}
         <TouchableOpacity style={styles.nextButton} onPress={goNext}>
           <Text style={styles.nextText}>다음</Text>
         </TouchableOpacity>
@@ -188,7 +135,7 @@ const QuoteDetailScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   content: {
     padding: 16,
-    paddingBottom: 32 + 56 + 32,
+    paddingBottom: 100,
   },
   quoteCard: {
     backgroundColor: '#eef1ff',
@@ -200,31 +147,7 @@ const styles = StyleSheet.create({
   quoteText: {
     fontSize: 16,
     color: '#333',
-    marginBottom: 8,
     textAlign: 'center',
-  },
-  pickerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    height: 56,
-    justifyContent: 'center',
-  },
-  pickerLabel: {
-    fontSize: 12,
-    color: '#666',
-    paddingHorizontal: 8,
-    paddingTop: 10,
-  },
-  picker: {
-    width: '100%',
-    height: 50,
   },
   previewCard: {
     borderWidth: 1,
@@ -236,21 +159,51 @@ const styles = StyleSheet.create({
   },
   previewText: {
     color: '#444',
-    lineHeight: 22,
+    fontSize: 16,
+    textAlignVertical: 'top',
     flex: 1,
+  },
+  fontSelector: {
+    marginBottom: 24,
+  },
+  fontSelectorLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  fontOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  selectedFontOption: {
+    backgroundColor: '#eee',
   },
   nextButton: {
     backgroundColor: '#000',
     borderRadius: 30,
     paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 40,
+    marginTop: 10,
   },
   nextText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 55,
+    width: '100%',
+  },
+
 });
 
 export default QuoteDetailScreen;

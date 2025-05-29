@@ -23,11 +23,11 @@ const BASE_URL = 'http://ceprj.gachon.ac.kr:60023';
 const ExerciseBookScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { fontId, fontName } = route.params;
-
+  const { fontId, fontName, quote: initialQuote } = route.params || {};
+  
   const [backgrounds, setBackgrounds] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [quote, setQuote] = useState('');
+  const [quote, setQuote] = useState(initialQuote || '');
   const [loading, setLoading] = useState(true);
   const flatListRef = useRef(null);
 
