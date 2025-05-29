@@ -185,9 +185,13 @@ const FontListScreen = () => {
           value={searchText}
           onChangeText={setSearchText}
         />
-        <TouchableOpacity style={styles.uploadButton}>
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={() => navigation.navigate('FontUpload')}
+        >
           <Text style={styles.uploadText}>+ 내 폰트 등록</Text>
         </TouchableOpacity>
+
       </View>
 
       {loading ? (

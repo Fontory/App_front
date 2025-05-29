@@ -36,6 +36,7 @@ import ExerciseBookScreen from './screens/ExerciseBook/ExerciseBookScreen';
 import ExerciseBook2Screen from './screens/ExerciseBook/ExerciseBook2Screen';
 import FontNamingScreen from './screens/Font/FontNamingScreen';
 import FontResultScreen from './screens/Font/FontResultScreen';
+import FontUploadScreen from './screens/Font/FontUploadScreen';
 
 export type RootStackParamList = {
   Welcome: undefined;
@@ -87,6 +88,7 @@ export type RootStackParamList = {
     ttfUrl: string;
     vectorSimilarity: number;
   };
+  FontUpload: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -129,6 +131,7 @@ const App = () => {
         <Stack.Screen name="ExerciseBook2" component={ExerciseBook2Screen} />
         <Stack.Screen name="FontNaming" component={FontNamingScreen} />
         <Stack.Screen name="FontResult" component={FontResultScreen} />
+        <Stack.Screen name="FontUpload" component={FontUploadScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

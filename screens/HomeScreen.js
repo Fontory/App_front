@@ -72,7 +72,6 @@ const HomeScreen = () => {
           Alert.alert('이미지 정보 오류', '이미지 크기를 확인할 수 없습니다.');
         });
       } else {
-        Alert.alert('선택 오류', '이미지를 선택하지 않았어요.');
       }
     });
   };
