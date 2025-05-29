@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,28 @@ const BoardPostScreen = ({ navigation }) => {
   const [photo, setPhoto] = useState(null);
   const [postType, setPostType] = useState('일반');
   const [body, setBody] = useState('');
-  const [font, setFont] = useState('');
+  const [fontList, setFontList] = useState([]);
+  const [selectedFontId, setSelectedFontId] = useState(null);
+  const [selectedFontName, setSelectedFontName] = useState('');
+
+  useEffect(() => {
+    const fetchFonts = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/fonts`);
+        setFontList(res.data || []);
+
+        if (res.data.length > 0) {
+          setSelectedFontId(res.data[0].fontId);
+          setSelectedFontName(res.data[0].fontName);
+        }
+      } catch (error) {
+        console.error('❌ 폰트 불러오기 실패:', error);
+        Alert.alert('오류', '폰트 목록을 불러오는 데 실패했습니다.');
+      }
+    };
+
+    fetchFonts();
+  }, []);
 
   const selectMedia = () => {
     launchImageLibrary(
@@ -38,10 +59,6 @@ const BoardPostScreen = ({ navigation }) => {
 const handleUpload = async () => {
   const type = postType === '필사' ? 'TRANSCRIPTION' : 'GENERAL';
 
-  let fontId = null;
-  if (font === 'NanumSquare') fontId = 3;
-  else if (font === 'Gothic') fontId = 4;
-
   const formData = new FormData();
 
   if (photo?.uri) {
@@ -56,8 +73,8 @@ const handleUpload = async () => {
   formData.append('postType', type);
 
   // ✅ fontId가 유효할 때만 추가
-  if (fontId !== null) {
-    formData.append('fontId', fontId.toString());
+  if (selectedFontId !== null && selectedFontId !== -1) {
+    formData.append('fontId', selectedFontId.toString());
   }
 
   console.log('📦 FormData:', formData);
@@ -147,16 +164,26 @@ const handleUpload = async () => {
           <Text style={styles.fontLabel}>사용된 폰트</Text>
           <View style={styles.fontPickerContainer}>
             <Picker
-              selectedValue={font}
-              onValueChange={setFont}
+              selectedValue={selectedFontId}
+              onValueChange={(itemValue) => {
+                const selectedFont = fontList.find(f => f.fontId === itemValue);
+                setSelectedFontId(itemValue);
+                setSelectedFontName(selectedFont?.fontName || '');
+              }}
               mode={Platform.OS === 'android' ? 'dialog' : 'dropdown'}
               style={styles.fontPicker}
               itemStyle={styles.fontPickerItem}
             >
-              <Picker.Item label="선택 안함" value="" />
-              <Picker.Item label="다운받은폰트-나눔스퀘어" value="NanumSquare" />
-              <Picker.Item label="다운받은폰트-고딕" value="Gothic" />
+              <Picker.Item label="선택 안함" value={null} />
+              {fontList.map((font) => (
+                <Picker.Item
+                  key={font.fontId}
+                  label={font.fontName}
+                  value={font.fontId}
+                />
+              ))}
             </Picker>
+
             {Platform.OS === 'ios' && (
               <Icon
                 name="chevron-down"

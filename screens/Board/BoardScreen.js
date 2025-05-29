@@ -123,7 +123,7 @@ const BoardScreen = ({ navigation }) => {
                     )}
                     <Text style={styles.userName}>{post.nickname}</Text>
                   </View>
-                  <Text style={styles.postText}>{post.content}</Text>
+                  <Text style={styles.postText}numberOfLines={2}>{post.content}</Text>
                 </View>
                 <TouchableOpacity style={styles.likeIcon}>
                   <Icon name="heart" size={20} color="#888" />
@@ -217,8 +217,10 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   postInfo: {
-    flex: 1,
+    flexShrink: 1,
     marginLeft: 12,
+    flexGrow: 1,
+    paddingRight: 40,
   },
   postHeader: {
     flexDirection: 'row',
